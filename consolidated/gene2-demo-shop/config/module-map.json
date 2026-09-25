@@ -1,0 +1,13 @@
+{
+  "login": {"paths": ["site/index.html", "site/app.js"], "routes": ["/index.html", "/"]},
+  "catalog": {"paths": ["site/catalog.html"], "routes": ["/catalog.html"]},
+  "cart": {"paths": ["site/cart.html"], "routes": ["/cart.html"]},
+  "checkout": {"paths": ["site/checkout.html", "site/confirmation.html"], "routes": ["/checkout.html", "/confirmation.html"]},
+  "search": {"paths": ["site/products.html"], "routes": ["/products.html"]},
+  "product": {"paths": ["site/product.html"], "routes": ["/product.html"]},
+  "review": {"paths": ["site/product.html"], "routes": ["/product.html"]},
+  "stock": {"paths": ["site/admin.html", "site/products.html"], "routes": ["/admin.html", "/products.html"]},
+  "promo": {"paths": ["site/checkout.html"], "routes": ["/checkout.html"]},
+  "shipping": {"paths": ["site/checkout.html"], "routes": ["/checkout.html"]},
+  "orders": {"paths": ["site/orders.html"], "routes": ["/orders.html"]}
+}

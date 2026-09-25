@@ -1,0 +1,108 @@
+{
+  "bugs": [
+    {
+      "bugkey": "a281e57eb3",
+      "filed": "2026-09-23T22:50:45+08:00",
+      "title": "an order cannot be placed without a postcode",
+      "module": "checkout",
+      "severity": "Medium",
+      "note": "DB-04 / REQ-POSTCODE. Repro tests/test_checkout.py::test_postcode_is_required (TC032, P-013). Not filed in Jira: offline demo app (dry-run only). Run test_runs/gene2-demo-shop-functional-20260923-184017/ Run 20260923-225724: reviewer confirmed a non-6-digit postcode ('12a') is also accepted; that repro (P-019) was rejected as not full strength and is not in the suite yet.",
+      "status": "open",
+      "updated": "2026-09-24T02:47:24+08:00",
+      "jira": "SHOP-37",
+      "test": "tests/test_checkout.py::test_postcode_is_required"
+    },
+    {
+      "bugkey": "72e06e2f07",
+      "filed": "2026-09-23T22:50:45+08:00",
+      "title": "double-submitting checkout records one order",
+      "module": "checkout",
+      "severity": "High",
+      "note": "DB-05 / REQ-ORDER. Repro tests/test_checkout.py::test_double_submit_records_one_order (TC033, P-014). Not filed in Jira: offline demo app (dry-run only). Run test_runs/gene2-demo-shop-functional-20260923-184017/",
+      "status": "open",
+      "updated": "2026-09-24T02:47:25+08:00",
+      "jira": "SHOP-38",
+      "test": "tests/test_checkout.py::test_double_submit_records_one_order"
+    },
+    {
+      "bugkey": "524796a0ae",
+      "filed": "2026-09-24T02:47:26+08:00",
+      "jira": "SHOP-41",
+      "title": "only one discount code applies per order",
+      "module": "promo",
+      "severity": "High",
+      "status": "open",
+      "updated": "2026-09-24T02:47:26+08:00"
+    },
+    {
+      "bugkey": "7c88f64d3a",
+      "filed": "2026-09-24T02:47:27+08:00",
+      "jira": "SHOP-42",
+      "title": "the regional surcharge is added to shipping",
+      "module": "shipping",
+      "severity": "Medium",
+      "status": "open",
+      "updated": "2026-09-24T02:47:27+08:00"
+    },
+    {
+      "bugkey": "f5d6071b32",
+      "filed": "2026-09-24T02:47:29+08:00",
+      "jira": "SHOP-43",
+      "title": "search matches product names regardless of case",
+      "module": "search",
+      "severity": "High",
+      "status": "open",
+      "updated": "2026-09-24T02:47:29+08:00"
+    },
+    {
+      "bugkey": "1e18f5de3b",
+      "filed": "2026-09-24T02:47:31+08:00",
+      "jira": "SHOP-44",
+      "title": "every matching product appears exactly once across pages",
+      "module": "search",
+      "severity": "Medium",
+      "status": "open",
+      "updated": "2026-09-24T02:47:31+08:00"
+    },
+    {
+      "bugkey": "8957b8eb87",
+      "filed": "2026-09-24T02:47:32+08:00",
+      "jira": "SHOP-45",
+      "title": "an out-of-stock product cannot be added to the cart",
+      "module": "stock",
+      "severity": "High",
+      "status": "open",
+      "updated": "2026-09-24T02:47:32+08:00"
+    },
+    {
+      "bugkey": "135fb86528",
+      "filed": "2026-09-24T03:03:56+08:00",
+      "jira": "SHOP-46",
+      "title": "sorting by price low to high is numeric",
+      "module": "catalog",
+      "severity": "Medium",
+      "status": "open",
+      "updated": "2026-09-24T03:03:56+08:00"
+    },
+    {
+      "bugkey": "a32beacd8f",
+      "filed": "2026-09-24T03:03:58+08:00",
+      "jira": "SHOP-47",
+      "title": "removing an item decrements the badge",
+      "module": "cart",
+      "severity": "Medium",
+      "status": "open",
+      "updated": "2026-09-24T03:03:58+08:00"
+    },
+    {
+      "bugkey": "7422b6f65e",
+      "filed": "2026-09-24T03:03:59+08:00",
+      "jira": "SHOP-48",
+      "title": "tax is 8% of the subtotal",
+      "module": "checkout",
+      "severity": "High",
+      "status": "open",
+      "updated": "2026-09-24T03:03:59+08:00"
+    }
+  ]
+}

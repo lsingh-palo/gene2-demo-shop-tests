@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - All products</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main>
+<h1>All products</h1>
+<div class="filters">
+<div><label for="q">Search</label><input id="q" data-test="search-input" placeholder="Search products"></div>
+<div><label for="cat">Category</label><select id="cat" data-test="filter-category">
+<option value="">All categories</option><option value="Home">Home</option><option value="Kitchen">Kitchen</option><option value="Outdoor">Outdoor</option></select></div>
+<div><label for="sort">Sort</label><select id="sort" data-test="sort">
+<option value="name-asc">Name (A to Z)</option><option value="name-desc">Name (Z to A)</option>
+<option value="price-asc">Price (low to high)</option><option value="price-desc">Price (high to low)</option>
+</select></div>
+<div><label class="check"><input type="checkbox" data-test="filter-in-stock"> In stock only</label></div>
+</div>
+<p data-test="empty-results" hidden>No products match.</p>
+<div class="grid" data-test="product-list"></div>
+<nav class="pager" data-test="pager">
+<button data-test="page-prev" hidden>Previous</button>
+<span data-test="page-indicator"></span>
+<button data-test="page-next" hidden>Next</button>
+</nav>
+</main>
+<script>GENE2_PAGES.products()</script></body></html>

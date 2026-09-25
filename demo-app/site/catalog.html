@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Catalog</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a><a href="reviews.html">Reviews</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main>
+<div class="promo" data-test="promo" hidden>Autumn promo: free tote with orders over $75.</div>
+<h1>Catalog</h1>
+<label for="sort">Sort</label>
+<select id="sort" data-test="sort">
+<option value="name-asc">Name (A to Z)</option><option value="name-desc">Name (Z to A)</option>
+<option value="price-asc">Price (low to high)</option><option value="price-desc">Price (high to low)</option>
+</select>
+<label for="q">Search</label><input id="q" data-test="search" placeholder="Search products">
+<p data-test="empty-results" hidden>No products match your search.</p>
+<div class="grid" data-test="product-list"></div>
+</main>
+<script>GENE2_PAGES.catalog()</script></body></html>

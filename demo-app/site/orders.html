@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Orders</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main><div class="panel"><h1>Your orders</h1>
+<p data-test="orders-empty" hidden>No orders yet.</p>
+<table class="orders" data-test="orders-table">
+<thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+<tbody data-test="order-list"></tbody>
+</table>
+</div></main>
+<script>GENE2_PAGES.orders()</script></body></html>

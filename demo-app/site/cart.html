@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Cart</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html" data-test="continue-shopping">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main><div class="panel"><h1>Your cart</h1>
+<p data-test="cart-empty" hidden>Your cart is empty.</p>
+<ul data-test="cart-list"></ul>
+<button data-test="checkout">Checkout</button>
+</div></main>
+<script>GENE2_PAGES.cart()</script></body></html>

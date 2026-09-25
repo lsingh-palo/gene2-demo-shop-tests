@@ -1,0 +1,1401 @@
+{
+  "slug": "gene2-demo-shop",
+  "base_urls": {
+    "primary": "http://127.0.0.1:8801"
+  },
+  "levels": [
+    "functional"
+  ],
+  "created": "2026-09-23T18:57:53+08:00",
+  "updated": "2026-09-24T02:43:07+08:00",
+  "scenarios": [
+    {
+      "key": "864b1923b6e7",
+      "tc_id": "TC021",
+      "level": "functional",
+      "module": "cart",
+      "title": "removing an item decrements the badge",
+      "type": "requirement",
+      "test_file": "tests/test_cart.py",
+      "test_name": "test_badge_decrements_on_remove",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-CART",
+      "plan_step": "P-009",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-CART"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "c2532dfeabcb",
+      "tc_id": "TC022",
+      "level": "functional",
+      "module": "cart",
+      "title": "the badge is hidden when the cart is empty",
+      "type": "requirement",
+      "test_file": "tests/test_cart.py",
+      "test_name": "test_badge_hidden_when_cart_empty",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-CART",
+      "plan_step": "P-010",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-CART"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "f0f7368d9d61",
+      "tc_id": "TC020",
+      "level": "functional",
+      "module": "cart",
+      "title": "adding items increments the badge",
+      "type": "requirement",
+      "test_file": "tests/test_cart.py",
+      "test_name": "test_badge_increments_on_add",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-CART",
+      "plan_step": "P-008",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-CART"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "2ba0dcbf93dd",
+      "tc_id": "TC010",
+      "level": "functional",
+      "module": "catalog",
+      "title": "sorting by price low to high is numeric",
+      "type": "requirement",
+      "test_file": "tests/test_catalog.py",
+      "test_name": "test_price_sort_is_numeric",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SORT",
+      "plan_step": "P-005",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-SORT"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "a00acfa89b6d",
+      "tc_id": "TC033",
+      "level": "functional",
+      "module": "checkout",
+      "title": "double-submitting checkout records one order",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_double_submit_records_one_order",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ORDER",
+      "plan_step": "P-014",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-ORDER"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 0,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "bug reproduction - fails until the app is fixed",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "85f73fc01d9a",
+      "tc_id": "TC032",
+      "level": "functional",
+      "module": "checkout",
+      "title": "an order cannot be placed without a postcode",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_postcode_is_required",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-POSTCODE",
+      "plan_step": "P-013",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-POSTCODE"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 0,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "bug reproduction - fails until the app is fixed",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "68bc7fc78a9e",
+      "tc_id": "TC030",
+      "level": "functional",
+      "module": "checkout",
+      "title": "tax is 8% of the subtotal",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_tax_is_eight_percent_of_subtotal",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-TAX",
+      "plan_step": "P-011",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-TAX"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Only subtotal $42.50 (exact $3.40), so REQ-TAX rounding is never exercised. Add a rounding case, e.g. $9.99 -> $0.80.",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "5631d3e93ff7",
+      "tc_id": "TC004",
+      "level": "functional",
+      "module": "login",
+      "title": "the catalog is not reachable without logging in",
+      "type": "security",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_catalog_requires_login",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "observed",
+      "plan_step": "P-004",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "be43037697a1",
+      "tc_id": "TC003",
+      "level": "functional",
+      "module": "login",
+      "title": "a locked account is refused with the lockout message",
+      "type": "negative",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_locked_account_is_refused",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-LOCK",
+      "plan_step": "P-003",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [
+        "REQ-LOCK"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Asserts the REQ-LOCK message only. Add an assertion that login did not succeed (URL stays on login page).",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "ab680631d87c",
+      "tc_id": "TC001",
+      "level": "functional",
+      "module": "login",
+      "title": "valid credentials land on the catalog",
+      "type": "positive",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_login_lands_on_catalog",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "observed",
+      "plan_step": "P-001",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "0c1367759bd5",
+      "tc_id": "TC002",
+      "level": "functional",
+      "module": "login",
+      "title": "a wrong password shows the mismatch error",
+      "type": "negative",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_login_wrong_password_shows_mismatch_error",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-184017",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-184017",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "observed",
+      "plan_step": "P-002",
+      "plan_file": "specs/plan-20260923-184017.md",
+      "requirement": [],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-184017"
+      }
+    },
+    {
+      "key": "00fd74de6758",
+      "tc_id": "TC011",
+      "level": "functional",
+      "module": "catalog",
+      "title": "sorting by name A to Z is alphabetical",
+      "type": "requirement",
+      "test_file": "tests/test_catalog.py",
+      "test_name": "test_name_sort_a_to_z",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SORT",
+      "plan_step": "P-020",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-SORT"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "name-asc is the default sort, so the grid is already A to Z on first render and the assertion passes on its first poll. It proves the comparator, not the act of choosing A to Z. Select another sort first to test that.",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "67e0f5d84c4d",
+      "tc_id": "TC012",
+      "level": "functional",
+      "module": "catalog",
+      "title": "sorting by name Z to A is reverse alphabetical",
+      "type": "requirement",
+      "test_file": "tests/test_catalog.py",
+      "test_name": "test_name_sort_z_to_a",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SORT",
+      "plan_step": "P-021",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-SORT"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "03318ba0cd92",
+      "tc_id": "TC013",
+      "level": "functional",
+      "module": "catalog",
+      "title": "sorting by price high to low is numeric",
+      "type": "requirement",
+      "test_file": "tests/test_catalog.py",
+      "test_name": "test_price_sort_high_to_low",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SORT",
+      "plan_step": "P-022",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-SORT"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "f4024c2a8d19",
+      "tc_id": "TC036",
+      "level": "functional",
+      "module": "checkout",
+      "title": "orders of $75 or less pay flat shipping",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_orders_of_75_or_less_pay_flat_shipping",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SHIP",
+      "plan_step": "P-017",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-SHIP"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Matches REQ-SHIP at $42.50 and $74.00. The $75.00-exact 'or less' case is not reachable with this catalogue, so the boundary is never tested.",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "dded027fe67d",
+      "tc_id": "TC035",
+      "level": "functional",
+      "module": "checkout",
+      "title": "orders over $75 ship free",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_orders_over_75_ship_free",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SHIP",
+      "plan_step": "P-016",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-SHIP"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Matches REQ-SHIP at $162.50 and $76.49. No cart totals exactly $75.00, so a '>= 75' threshold, or any threshold between $74.00 and $76.49, would still pass. The catalogue causes this limit.",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "812bb77b3ca9",
+      "tc_id": "TC034",
+      "level": "functional",
+      "module": "checkout",
+      "title": "tax is rounded to the nearest cent",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_tax_rounds_to_nearest_cent",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-TAX",
+      "plan_step": "P-015",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-TAX"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "fe00ed535b25",
+      "tc_id": "TC005",
+      "level": "functional",
+      "module": "login",
+      "title": "a locked account cannot reach the catalog",
+      "type": "security",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_locked_account_cannot_reach_catalog",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260923-225724",
+      "last_verified_run": "gene2-demo-shop-functional-20260923-225724",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-LOCK",
+      "plan_step": "P-018",
+      "plan_file": "specs/plan-20260923-225724.md",
+      "requirement": [
+        "REQ-LOCK"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "The catalog-redirect check closes the first-poll race on the URL check. The error-visible barrier accepts any error; asserting the REQ-LOCK text would stop a wrong locked credential from passing silently.",
+        "run": "gene2-demo-shop-functional-20260923-225724"
+      }
+    },
+    {
+      "key": "c03325b40533",
+      "tc_id": "TC023",
+      "level": "functional",
+      "module": "cart",
+      "title": "the badge counts quantities",
+      "type": "requirement",
+      "test_file": "tests/test_cart.py",
+      "test_name": "test_badge_counts_quantities",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-CART-02",
+      "plan_step": "P-031",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-CART-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "A single cart line cannot tell 'sum of quantities' from 'max/last line quantity'. Add a second line (p2 x3 + p5 x2 = 5).",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "ddd9593ffc9f",
+      "tc_id": "TC037",
+      "level": "functional",
+      "module": "checkout",
+      "title": "tax is charged on the discounted subtotal",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_tax_on_discounted_subtotal",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-TAX-02",
+      "plan_step": "P-040",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-TAX-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "5830a8821b07",
+      "tc_id": "TC006",
+      "level": "functional",
+      "module": "login",
+      "title": "a customer cannot use the admin page",
+      "type": "security",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_customer_cannot_use_admin_page",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-AUTH-02",
+      "plan_step": "P-045",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-AUTH-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "'No admin controls' is checked only through the stock inputs. The promo switches are in the customer DOM (hidden). Assert admin-panel hidden.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "e150dc95b449",
+      "tc_id": "TC100",
+      "level": "functional",
+      "module": "orders",
+      "title": "order history lists the customer's orders newest first",
+      "type": "requirement",
+      "test_file": "tests/test_orders.py",
+      "test_name": "test_order_history_newest_first",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ORDER-02",
+      "plan_step": "P-044",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-ORDER-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "SO-1001/SO-1002 are observed literals (REQ-ORDER-02 gives no format). The totals tie the test to tax, so on v2 it fails from the 10% tax although the order is correct. The date column is not asserted.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "6a48c0930711",
+      "tc_id": "TC050",
+      "level": "functional",
+      "module": "product",
+      "title": "the average rating is shown to one decimal",
+      "type": "requirement",
+      "test_file": "tests/test_product.py",
+      "test_name": "test_average_rating_to_one_decimal",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PDP-01",
+      "plan_step": "P-027",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-PDP-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "5551a0c37f42",
+      "tc_id": "TC084",
+      "level": "functional",
+      "module": "promo",
+      "title": "a code disabled by the admin is not valid",
+      "type": "requirement",
+      "test_file": "tests/test_promo.py",
+      "test_name": "test_code_disabled_by_admin_is_not_valid",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ADMIN-02",
+      "plan_step": "P-039",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-ADMIN-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "511c48813a1e",
+      "tc_id": "TC081",
+      "level": "functional",
+      "module": "promo",
+      "title": "freeship combines with a discount code",
+      "type": "requirement",
+      "test_file": "tests/test_promo.py",
+      "test_name": "test_freeship_combines_with_a_discount_code",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PROMO-02",
+      "plan_step": "P-036",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-PROMO-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "f0e5a55c70bf",
+      "tc_id": "TC080",
+      "level": "functional",
+      "module": "promo",
+      "title": "only one discount code applies per order",
+      "type": "requirement",
+      "test_file": "tests/test_promo.py",
+      "test_name": "test_only_one_discount_code_per_order",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PROMO-02",
+      "plan_step": "P-035",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-PROMO-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "702de2ec6205",
+      "tc_id": "TC083",
+      "level": "functional",
+      "module": "promo",
+      "title": "an unknown code is not valid",
+      "type": "requirement",
+      "test_file": "tests/test_promo.py",
+      "test_name": "test_unknown_code_is_not_valid",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PROMO-01",
+      "plan_step": "P-038",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-PROMO-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "'Changes nothing' is asserted only as discount $0.00, the starting value. Assert the total unchanged. Case-insensitivity from REQ-PROMO-01 is untested.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "a16f8c54cd7a",
+      "tc_id": "TC082",
+      "level": "functional",
+      "module": "promo",
+      "title": "welcome5 needs a subtotal of 30 dollars",
+      "type": "requirement",
+      "test_file": "tests/test_promo.py",
+      "test_name": "test_welcome5_needs_thirty_dollars",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PROMO-03",
+      "plan_step": "P-037",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-PROMO-03"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "$27.99 / $30.00 separates the $25 reading and pins >=, but any threshold from $28 to $30 passes. $29.97 (Espresso Cups x3) can be reached. The $0.00 discount after the refusal is the starting value.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "2148b58f2c67",
+      "tc_id": "TC062",
+      "level": "functional",
+      "module": "review",
+      "title": "a customer can review a product only once",
+      "type": "requirement",
+      "test_file": "tests/test_review.py",
+      "test_name": "test_one_review_per_customer",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-REVIEW-02",
+      "plan_step": "P-030",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-REVIEW-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "92f65d87aec3",
+      "tc_id": "TC061",
+      "level": "functional",
+      "module": "review",
+      "title": "review text must be 10 to 500 characters",
+      "type": "requirement",
+      "test_file": "tests/test_review.py",
+      "test_name": "test_review_text_length_limits",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-REVIEW-01",
+      "plan_step": "P-029",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-REVIEW-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Only the lower boundary 9/10 is pinned. The REQ-REVIEW-01 upper boundary 500/501 is untested (both builds handle it correctly today).",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "ddf322dac29b",
+      "tc_id": "TC060",
+      "level": "functional",
+      "module": "review",
+      "title": "a review without a rating is rejected",
+      "type": "requirement",
+      "test_file": "tests/test_review.py",
+      "test_name": "test_review_without_rating_is_rejected",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-REVIEW-01",
+      "plan_step": "P-028",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-REVIEW-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "'Not saved' is only review-item count 0, the starting state, so it passes on the first poll. Also assert pdp-rating still 'No reviews yet'.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "7f5e0fb5f131",
+      "tc_id": "TC043",
+      "level": "functional",
+      "module": "search",
+      "title": "every matching product appears exactly once across pages",
+      "type": "requirement",
+      "test_file": "tests/test_search.py",
+      "test_name": "test_every_product_appears_once_across_pages",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SEARCH-03",
+      "plan_step": "P-026",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SEARCH-03"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "The deciding checks (18 cards, 18 distinct) are plain asserts that admission did not mutate. all_inner_texts does not retry. 'No Previous on page 1' from REQ-SEARCH-03 is not checked.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "93f7fb02eedb",
+      "tc_id": "TC042",
+      "level": "functional",
+      "module": "search",
+      "title": "kitchen with in stock only lists exactly eight products on one page",
+      "type": "requirement",
+      "test_file": "tests/test_search.py",
+      "test_name": "test_kitchen_in_stock_fits_one_page",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SEARCH-02",
+      "plan_step": "P-025",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SEARCH-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "107f484cbc64",
+      "tc_id": "TC040",
+      "level": "functional",
+      "module": "search",
+      "title": "search matches product names regardless of case",
+      "type": "requirement",
+      "test_file": "tests/test_search.py",
+      "test_name": "test_search_ignores_case",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SEARCH-01",
+      "plan_step": "P-023",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SEARCH-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "The LAMP query starts from a list that already reads ['Desk Lamp'], so it passes on the first poll if rendering is async or the input is ignored. Clear the search and assert the reset between queries. 'Lamp' is not tested.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "5377462e0088",
+      "tc_id": "TC041",
+      "level": "functional",
+      "module": "search",
+      "title": "a search with no matches shows the empty message",
+      "type": "requirement",
+      "test_file": "tests/test_search.py",
+      "test_name": "test_search_without_matches_shows_empty_message",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SEARCH-01",
+      "plan_step": "P-024",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SEARCH-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "0341198bacfe",
+      "tc_id": "TC092",
+      "level": "functional",
+      "module": "shipping",
+      "title": "the free shipping threshold is measured after discounts",
+      "type": "requirement",
+      "test_file": "tests/test_shipping.py",
+      "test_name": "test_free_shipping_threshold_after_discounts",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SHIP-04",
+      "plan_step": "P-043",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SHIP-04"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "The $76.49 Free half repeats existing TC035. The value is the SAVE10 half ($68.84 pays $6.50).",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "0408ea76ac0d",
+      "tc_id": "TC090",
+      "level": "functional",
+      "module": "shipping",
+      "title": "the regional surcharge is added to shipping",
+      "type": "requirement",
+      "test_file": "tests/test_shipping.py",
+      "test_name": "test_regional_surcharge_is_added",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SHIP-02",
+      "plan_step": "P-041",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SHIP-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "052a340d8f19",
+      "tc_id": "TC091",
+      "level": "functional",
+      "module": "shipping",
+      "title": "remote shipping is always 14 dollars",
+      "type": "requirement",
+      "test_file": "tests/test_shipping.py",
+      "test_name": "test_remote_shipping_is_always_fourteen",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-SHIP-03",
+      "plan_step": "P-042",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-SHIP-03"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "FREESHIP is never shown to be accepted before switching to Remote, so the FREESHIP half passes even if the code did nothing. Assert shipping 'Free' under Metro first.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "0e0cb2ad4f6a",
+      "tc_id": "TC071",
+      "level": "functional",
+      "module": "stock",
+      "title": "stock set to zero by the admin blocks adding in the catalogue",
+      "type": "requirement",
+      "test_file": "tests/test_stock.py",
+      "test_name": "test_admin_zero_stock_blocks_adding",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ADMIN-01",
+      "plan_step": "P-033",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-ADMIN-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Checks only the Featured list. REQ-STOCK-01 / SHOP-17 require every list and the product page. Add All products and product-page assertions.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "6f4f540cf5b4",
+      "tc_id": "TC072",
+      "level": "functional",
+      "module": "stock",
+      "title": "a product with 1 to 3 left shows only n left",
+      "type": "requirement",
+      "test_file": "tests/test_stock.py",
+      "test_name": "test_low_stock_shows_only_n_left",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-STOCK-01",
+      "plan_step": "P-034",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-STOCK-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Only N=2 is tested, so the 1 to 3 range is not pinned. Scented Candle (p15, 3 left) gives the upper edge without admin. 4 needs admin.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "84f462a0fa33",
+      "tc_id": "TC070",
+      "level": "functional",
+      "module": "stock",
+      "title": "an out-of-stock product cannot be added to the cart",
+      "type": "requirement",
+      "test_file": "tests/test_stock.py",
+      "test_name": "test_out_of_stock_product_cannot_be_added",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260924-015812",
+      "last_verified_run": "gene2-demo-shop-functional-20260924-015812",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-STOCK-01",
+      "plan_step": "P-032",
+      "plan_file": "specs/plan-20260924-015812.md",
+      "requirement": [
+        "REQ-STOCK-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "The product-page button is only asserted disabled. REQ-STOCK-01 also requires it to read 'Out of stock' there.",
+        "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    }
+  ]
+}

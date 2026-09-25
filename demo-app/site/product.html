@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Product</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main>
+<p data-test="pdp-missing" hidden>Product not found. <a href="products.html">Back to all products</a></p>
+<div class="panel" data-test="pdp">
+<h1 data-test="pdp-name"></h1>
+<p class="price" data-test="pdp-price"></p>
+<p>Category: <span data-test="pdp-category"></span> &middot; <span class="stock" data-test="pdp-stock"></span></p>
+<p data-test="pdp-description"></p>
+<p>Rating: <span data-test="pdp-rating"></span></p>
+<label for="qty">Quantity</label>
+<select id="qty" data-test="qty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<button data-test="add-to-cart">Add to cart</button>
+<p class="ok" data-test="added" hidden>Added to cart.</p>
+<h2>Reviews</h2>
+<ul class="reviews" data-test="review-list"></ul>
+<h3>Write a review</h3>
+<div class="error" data-test="review-error" role="alert" hidden></div>
+<form data-test="review-form">
+<label for="rating">Rating</label>
+<select id="rating" data-test="review-rating"><option value="">Choose</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select>
+<label for="rtext">Your review</label><textarea id="rtext" data-test="review-text" rows="4"></textarea>
+<p><button type="submit" data-test="review-submit">Submit review</button></p>
+</form>
+</div></main>
+<script>GENE2_PAGES.product()</script></body></html>

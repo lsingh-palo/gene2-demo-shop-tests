@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Order placed</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a><button data-test="logout">Log out</button></header>
+<main><div class="panel"><h1 data-test="confirmation-title">Thank you, your order is placed.</h1>
+<p>Order number: <span data-test="order-number"></span></p>
+<p>Orders on this account: <span data-test="order-count"></span></p>
+<p><a href="orders.html">View your orders</a></p></div></main>
+<script>GENE2_PAGES.confirmation()</script></body></html>

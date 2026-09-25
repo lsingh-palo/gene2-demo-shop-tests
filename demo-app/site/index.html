@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Log in</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span></header>
+<main><div class="panel" style="max-width:380px;margin:40px auto">
+<h1>Log in</h1>
+<div class="error" data-test="error" role="alert" hidden></div>
+<form data-test="login-form">
+<label for="u">Username</label><input id="u" data-test="username" autocomplete="username">
+<label for="p">Password</label><input id="p" type="password" data-test="password" autocomplete="current-password">
+<p><button type="submit" data-test="login-button">Log in</button></p>
+</form>
+<p style="color:#5b6b78;font-size:13px">Demo accounts: standard_user / demo_pass, locked_user / demo_pass, admin_user / demo_pass</p>
+</div></main>
+<script>GENE2_PAGES.login()</script></body></html>

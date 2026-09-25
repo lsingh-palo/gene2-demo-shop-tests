@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Admin</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a>
+<a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main><div class="panel"><h1>Admin</h1>
+<p class="error" data-test="admin-denied" hidden>Admins only.</p>
+<div data-test="admin-panel" hidden>
+<div class="error" data-test="admin-error" role="alert" hidden></div>
+<p class="ok" data-test="admin-saved" hidden>Saved.</p>
+<h2>Promo codes</h2>
+<label class="check"><input type="checkbox" data-test="admin-promo-SAVE10"> SAVE10 (10% off the subtotal)</label>
+<label class="check"><input type="checkbox" data-test="admin-promo-WELCOME5"> WELCOME5 ($5 off orders of $30 or more)</label>
+<label class="check"><input type="checkbox" data-test="admin-promo-FREESHIP"> FREESHIP (free shipping)</label>
+<h2>Stock</h2>
+<table class="orders"><thead><tr><th>Product</th><th>Stock</th></tr></thead><tbody data-test="admin-stock-list"></tbody></table>
+</div>
+</div></main>
+<script>GENE2_PAGES.admin()</script></body></html>

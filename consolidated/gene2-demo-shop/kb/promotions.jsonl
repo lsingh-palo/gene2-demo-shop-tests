@@ -1,0 +1,15 @@
+{"file": "demo-shop-checkout-and-catalogue-rules.md", "sha1": "ea627ac79da8983c5d601cb78852ac915039055d", "at": "2026-09-23T23:27:14+08:00", "note": "recorded after the fact on 2026-09-23 when the log was introduced; the promotion itself was approved at the kb-promotion gate of run gene2-demo-shop-functional-20260923-184017 (docs/gate-log.jsonl, 18:41:10)"}
+{"file": "business-rules-tax-shipping-and-promotions.md", "sha1": "95c572408cb4563e3148545031221e11bac74354", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "demo-shop-checkout-and-catalogue-rules.md", "sha1": "08cd91d0a40b567c4c0b2123cea12dde39e7ac0a", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "demo-shop-product-requirements.md", "sha1": "1b2f3e11691ddc2873bcd01774119606c61bfeb4", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "glossary.md", "sha1": "4b2e8bdeba8d7ba1617bc983bf4729d336e3fd8f", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "jira-requirements.md", "sha1": "ce87818c94eaa2889c146cd492a74385f5290a89", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "release-notes-v1-0.md", "sha1": "2d15ae3edcd1e0cb19b06795e484572fa0147a12", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "release-notes-v2-0-rc.md", "sha1": "8ccee67c3f0e884c106cc10a1e63170b9e97f689", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-accounts-and-access.md", "sha1": "5fdd5ff46d9591664593fb041f48516bba6efa45", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-cart-stock-and-promotions.md", "sha1": "470a27e9d466ee1a7666fa221762866682caaf87", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-catalogue-and-search.md", "sha1": "336779b109a3341fd0abb42600e70a05c31e0c5f", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-checkout-tax-and-shipping.md", "sha1": "5aebd7cfa2cfc3eb37f5ff897b39abd1b0d53497", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-orders-and-admin.md", "sha1": "00f2cccb7f338a3a5d2761cdf2f21be6b61d08a9", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "requirements-product-detail-and-reviews.md", "sha1": "a08cf197f5e42bfb0b842964188b758258980706", "at": "2026-09-24T02:19:22+08:00"}
+{"file": "test-strategy.md", "sha1": "f7fae2c067fd5bcdb1c5b4ce989608572cffc2c4", "at": "2026-09-24T02:19:22+08:00"}

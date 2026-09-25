@@ -1,0 +1,44 @@
+{
+ "note": "Demo-only ground truth for the learning layer's recall and confusion matrix, and for evals/run_local.py (one source). Planted defect -> the suite tests that must catch it. From evals/demo-app/GROUND_TRUTH.md.",
+ "v2_defects": {
+  "DB-01": [
+   "test_price_sort_is_numeric",
+   "test_price_sort_high_to_low"
+  ],
+  "DB-02": [
+   "test_badge_decrements_on_remove",
+   "test_badge_hidden_when_cart_empty",
+   "test_badge_counts_quantities"
+  ],
+  "DB-03": [
+   "test_tax_is_eight_percent_of_subtotal",
+   "test_tax_rounds_to_nearest_cent",
+   "test_tax_on_discounted_subtotal",
+   "test_order_history_newest_first"
+  ],
+  "DB-06": [
+   "test_only_one_discount_code_per_order"
+  ],
+  "DB-07": [
+   "test_search_ignores_case"
+  ],
+  "DB-08": [
+   "test_every_product_appears_once_across_pages"
+  ],
+  "DB-09": [
+   "test_regional_surcharge_is_added"
+  ],
+  "DB-10": [
+   "test_out_of_stock_product_cannot_be_added",
+   "test_admin_zero_stock_blocks_adding"
+  ]
+ },
+ "shared_bugs": {
+  "DB-04": [
+   "test_postcode_is_required"
+  ],
+  "DB-05": [
+   "test_double_submit_records_one_order"
+  ]
+ }
+}

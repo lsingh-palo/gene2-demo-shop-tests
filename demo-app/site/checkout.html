@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Gen-e2 Demo Shop - Checkout</title>
+<link rel="stylesheet" href="style.css"><script src="config.js"></script><script src="app.js"></script></head>
+<body><header><span class="brand">Gen-e2 Demo Shop</span><a href="catalog.html">Catalog</a><a href="products.html" data-test="nav-products">All products</a><a href="orders.html" data-test="nav-orders">Orders</a><a href="admin.html" data-test="nav-admin" hidden>Admin</a><a href="cart.html" data-test="cart-link">Cart <span class="badge" data-test="cart-badge" hidden></span></a>
+<button data-test="logout">Log out</button></header>
+<main><div class="panel"><h1>Checkout</h1>
+<table class="totals">
+<tr><td>Subtotal</td><td data-test="subtotal"></td></tr>
+<tr><td>Discount</td><td data-test="discount"></td></tr>
+<tr><td>Tax</td><td data-test="tax"></td></tr>
+<tr><td>Shipping</td><td data-test="shipping"></td></tr>
+<tr><td><b>Total</b></td><td data-test="total"></td></tr>
+</table>
+<div class="promo-box"><label for="code">Promo code</label>
+<input id="code" data-test="promo-input" placeholder="e.g. SAVE10"> <button type="button" data-test="promo-apply">Apply</button>
+<p class="error" data-test="promo-error" role="alert" hidden></p>
+<p>Applied: <span class="chip" data-test="promo-applied" hidden></span></p></div>
+<div class="error" data-test="checkout-error" role="alert" hidden></div>
+<form data-test="checkout-form">
+<label for="n">Full name</label><input id="n" data-test="full-name" autocomplete="name">
+<label for="addr">Address</label><input id="addr" data-test="address" autocomplete="street-address">
+<label for="pc">Postcode</label><input id="pc" data-test="postcode" inputmode="numeric" autocomplete="postal-code">
+<label for="region">Delivery region</label><select id="region" data-test="region">
+<option value="Metro">Metro</option><option value="Regional">Regional</option><option value="Remote">Remote</option></select>
+<p><button type="submit" data-test="place-order">Place order</button></p>
+</form></div></main>
+<script>GENE2_PAGES.checkout()</script></body></html>

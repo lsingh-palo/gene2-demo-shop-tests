@@ -1,0 +1,36 @@
+{
+  "slug": "gene2-demo-shop",
+  "apps": {
+    "primary": {
+      "base_url": "http://127.0.0.1:8801",
+      "primary": true
+    }
+  },
+  "website_url": "http://127.0.0.1:8801",
+  "credentials_from_env": false,
+  "credentials": {
+    "primary": {
+      "username": "standard_user",
+      "password": "demo_pass"
+    },
+    "standard": {
+      "username": "standard_user",
+      "password": "demo_pass"
+    },
+    "locked": {
+      "username": "locked_user",
+      "password": "demo_pass"
+    },
+    "admin": {
+      "username": "admin_user",
+      "password": "demo_pass"
+    }
+  },
+  "timeout": 10000,
+  "default_browsers": [
+    "chromium"
+  ],
+  "default_workers": 1,
+  "execution_mode": "interactive",
+  "note": "Local demo target (evals/demo-app/serve.py). v1 on :8801 is the oracle; v2 on :8802 is the replacement for the parity dual-run."
+}
