@@ -110,7 +110,20 @@ jobs:
           python "$TOOLS/story_status.py" --slug "$GENE2_TARGET_SLUG" --junit report.xml \
             --run "gh-${{ github.run_id }}" --apply --confirm-host "$HOST"
 
-      - name: Allure report
+      - name: Allure report (needs Node + Java; the playwright/python image has neither)
+        if: always()
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java for the Allure CLI
+        if: always()
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Generate the Allure report
         if: always()
         run: npx --yes allure-commandline generate allure-results -o allure-report --clean
 
