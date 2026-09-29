@@ -51,8 +51,9 @@ the exact commands to clear each one.
 ```
 
 It removes what runs of this suite created, found by label and marker (never by a key range):
-Jira bugs (`gene2-live` + `gene2-suite-gene2-demo-shop`, and every bug in the suite's ledger by its
-fingerprint label, including ones filed before the `gene2-live` label existed), harness comments
+Jira bugs (`gene2-live` + `gene2-suite-gene2-demo-shop`, and the bugs earlier runs filed that are in
+the suite's ledger, by fingerprint label and the run's title format; the seeded bugs are kept),
+harness comments
 on stories, QMetry test cycles named `gene2 gene2-demo-shop ...` (deleting a cycle deletes its
 executions: an execution only exists inside its cycle) and test cases labelled `gene2-live`, and
 local run leftovers. Only a person at a terminal can type the host, so no script or AI assistant
@@ -76,7 +77,10 @@ git add consolidated/gene2-demo-shop/bugs.json && git commit -m "Reset the bug l
 | full | every test; the 2 known-bug reproductions fail as designed and the run stays green | `./gene2 run full` | `./gene2 ci full` |
 
 Add `v2` to run against the release candidate (`demo-app` v2, which has regressions): real
-failures, to triage and file. `headed` shows the browser (one worker).
+failures, to triage and file. `headed` shows the browser (one worker). Add `--version 2.3.7` to
+name the version under test: the same value then shows on the CI run page, in Allure's Environment
+panel (with the run id, the QMetry cycle key and a link to the CI run), in the stakeholder PDF and
+on the QMetry cycle, whose description links back to the CI run.
 
 A **local run** runs the tests, syncs them into QMetry (one cycle per run, Environment `test`,
 Version one past this suite's last one) and writes the run report. `./gene2 allure` opens that
@@ -143,8 +147,8 @@ to the open bug instead of a duplicate). Rows proposed `needs_review` wait for a
 |---|---|
 | `./gene2 preflight` | ready check and leftovers (read-only) |
 | `./gene2 clean [--apply]` / `./gene2 clean local` | remove what runs created / local leftovers only |
-| `./gene2 run <level> [v2] [headed]` | run here + QMetry sync + run report |
-| `./gene2 ci <level> [v2]` | run in GitHub Actions, wait, fetch the run report |
+| `./gene2 run <level> [v2] [headed] [--version X]` | run here + QMetry sync + run report |
+| `./gene2 ci <level> [v2] [--version X]` | run in GitHub Actions, wait, fetch the run report |
 | `./gene2 triage` / `accept` / `bugs [--dry-run]` | failures -> confirmed -> Jira bugs attached in QMetry |
 | `./gene2 promote <test> --module M --title T` | add a new exploratory test to the manifest |
 | `./gene2 report` / `status` | latest run report / all runs |
