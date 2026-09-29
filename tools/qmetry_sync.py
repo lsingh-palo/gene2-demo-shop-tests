@@ -96,7 +96,11 @@ class Client:
         self._req("PUT", f"/testcases/{cid}/versions/{version_no}", json=body)
 
     def search_cycles(self, pid, summary):
-        return self._req("POST", "/testcycles/search?maxResults=50",
+        # fields must be requested explicitly - without it the API omits summary entirely, which
+        # made the "does this cycle already exist" check always false: found live (29 Sep) after
+        # one suite's repeated CI runs had quietly created NINE duplicate cycles under the same
+        # name, none of them ever reused.
+        return self._req("POST", "/testcycles/search?maxResults=50&fields=summary",
                          json={"filter": {"projectId": pid, "summary": summary}}).get("data", [])
 
     def create_cycle(self, body):
@@ -106,7 +110,13 @@ class Client:
         self._req("POST", f"/testcycles/{cycle_id}/testcases", json={"testCases": cases})
 
     def cycle_cases(self, cycle_id):
-        return self._req("POST", f"/testcycles/{cycle_id}/testcases/search?maxResults=500", json={"filter": {}}).get("data", [])
+        # fields must be requested explicitly - without it the API omits summary AND
+        # executionResult, which silently broke every result update (found live 29 Sep: 39
+        # executions created and linked, all left "Not Executed" - the by-summary lookup in
+        # Sync.results() matched nothing, so set_result was never actually called, even though
+        # the run printed "result TCxxx -> Pass/Fail" as if it had been).
+        return self._req("POST", f"/testcycles/{cycle_id}/testcases/search?maxResults=500&fields=summary,executionResult",
+                         json={"filter": {}}).get("data", [])
 
     def case_requirements(self, cid, version_no=1):
         d = self._req("GET", f"/testcases/{cid}/requirements?tcVersionNo={version_no}&maxResults=100")
