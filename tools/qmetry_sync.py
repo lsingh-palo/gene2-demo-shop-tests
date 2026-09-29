@@ -16,8 +16,10 @@ same TC id as the QMetry Excel) in the Jira project, labelled `gene2`; a cycle i
 summary is "gene2 <slug> <run id>". A second run changes nothing that is already right.
 Each case is linked to the Jira stories of its requirement (requirements-map.json), so the story's
 QMetry panel lists its tests and their latest results; the TC id -> QMetry key map is saved to
-consolidated/<slug>/qmetry-cases.json for bugs and story comments. Cases and cycles carry the label
-`gene2-live`, which is what `gene2 clean --qmetry` removes (never by key number).
+consolidated/<slug>/qmetry-cases.json for bugs and story comments. Every failed test with an OPEN
+bug in the suite's ledger (bugs.json, filed by jira_bug.py) gets that bug attached to its execution
+as a QMetry defect (idempotent: checked before every attempt, never linked twice). Cases and cycles
+carry the label `gene2-live`, which is what `gene2 clean --qmetry` removes (never by key number).
 Safety: dry run by default; --apply needs --confirm-host equal to the host of QMETRY_BASE_URL
 (default https://qtmcloud.qmetry.com; Australia: https://syd-qtmcloud.qmetry.com); nothing is deleted.
 Credentials: QMETRY_API_KEY (and QMETRY_BASE_URL, JIRA_PROJECT_KEY) through tools/_secrets.py only.
@@ -131,6 +133,13 @@ class Client:
     def set_result(self, cycle_id, execution_id, result_id):
         self._req("PUT", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}", json={"executionResultId": result_id})
 
+    def case_defects(self, cycle_id, execution_id):
+        d = self._req("POST", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}/defects", json={"filter": {}})
+        return d if isinstance(d, list) else d.get("data", [])
+
+    def link_defect(self, cycle_id, execution_id, defect_ids):
+        self._req("PUT", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}/defects", json={"defectIDs": defect_ids})
+
 
 def manifest_cases(slug: str, root: pathlib.Path) -> list[dict]:
     suite = root / "consolidated" / slug
@@ -159,9 +168,10 @@ def junit_outcomes(path: pathlib.Path) -> dict[str, str]:
 
 
 class Sync:
-    def __init__(self, client, project_key: str, apply: bool = False, out=print, story_ids=None):
+    def __init__(self, client, project_key: str, apply: bool = False, out=print, story_ids=None, defect_ids=None):
         self.c, self.key, self.apply, self.out = client, project_key, apply, out
         self.story_ids = story_ids  # callable: [story keys] -> {key: Jira issue id}; None = no linking
+        self.defect_ids = defect_ids  # callable: [jira keys] -> {key: Jira issue id}; None = no defect linking
         self.tc_keys: dict[str, str] = {}
         self.counts = collections.Counter()
         self.pid = client.project_id(project_key) if client else None
@@ -234,8 +244,11 @@ class Sync:
                 if req_ids:
                     self.c.link_requirements(hit["id"], hit["versionNo"], req_ids)
 
-    def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str]) -> None:
-        """One cycle per run; link every case with a result; set each execution's result."""
+    def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str],
+                bugs_by_test: dict[str, str] | None = None) -> None:
+        """One cycle per run; link every case with a result; set each execution's result; attach
+        each failed test's open Jira bug to its execution as a QMetry defect, so the cycle and the
+        bug point at each other (bugs_by_test: test_name -> Jira key, from the bug ledger)."""
         ids = self.cases(cases)
         summary = f"gene2 {slug} {run_id}"
         cycles = [c for c in (self.c.search_cycles(self.pid, summary) if self.c else []) if c.get("summary") == summary]
@@ -267,13 +280,59 @@ class Sync:
             self.act("result", f"{c['tc_id']} -> {want}")
             if self.apply and ex:
                 self.c.set_result(cyc["id"], ex["testCaseExecutionId"], result_ids[want])
+        self._attach_defects(cyc, with_result, linked, outcomes, bugs_by_test or {})
+
+    def _attach_defects(self, cyc, with_result, linked, outcomes, bugs_by_test: dict[str, str]) -> None:
+        """Link the open Jira bug of every failed test to its QMetry execution (idempotent: only
+        when it is not already linked)."""
+        failed = [c for c in with_result if outcomes.get(c["test_name"]) == "failed" and c["test_name"] in bugs_by_test]
+        if not failed or not cyc.get("id"):
+            return
+        keys = sorted({bugs_by_test[c["test_name"]] for c in failed})
+        ids = self.defect_ids(keys) if (self.defect_ids and self.c) else {}
+        for c in failed:
+            key = bugs_by_test[c["test_name"]]
+            ex = linked.get(c["summary"])
+            if not ex:
+                continue
+            have = ({d.get("key") for d in self.c.case_defects(cyc["id"], ex["testCaseExecutionId"])}
+                    if self.c else set())
+            if key in have:
+                self.act("unchanged", f"{c['tc_id']} defect {key} already attached")
+                continue
+            self.act("defect", f"{c['tc_id']} -> {key}")
+            if self.apply and key in ids:
+                self.c.link_defect(cyc["id"], ex["testCaseExecutionId"], [int(ids[key])])
 
 
 def jira_issue_ids(keys: list[str]) -> dict[str, str]:
-    """Jira issue ids for story keys (QTM4J links requirements by issue id)."""
+    """Jira issue ids for a list of keys (QTM4J links requirements and defects by issue id, never
+    by key). Used both for story links (on cases) and defect links (on failed executions).
+
+    Degrades to {} (never raises) when Atlassian credentials are not configured: linking a case to
+    its story, or a bug to its execution, is a nice-to-have on top of the cases/results sync, never
+    a reason to fail the whole sync - found live (29 Sep): a run with QMetry configured but no
+    ATLASSIAN_EMAIL/ATLASSIAN_API_TOKEN set crashed the entire `results` step on this call, even
+    though every case and every pass/fail result had already synced correctly."""
     import jira_live
+    try:
+        client = jira_live.JiraClient()
+    except SystemExit as e:
+        print(f"warning: story/defect links skipped - {e}", file=sys.stderr)
+        return {}
     jql = f"key in ({', '.join(keys)})"
-    return {i["key"]: i["id"] for i in jira_live.JiraClient().search(jql, fields="summary")}
+    return {i["key"]: i["id"] for i in client.search(jql, fields="summary")}
+
+
+def bugs_by_test(slug: str, root: pathlib.Path) -> dict[str, str]:
+    """test_name -> Jira key, for every OPEN bug in the suite's ledger (bugs.json)."""
+    import bug_ledger
+    ledger = bug_ledger.load(slug, root=str(root / "consolidated"))
+    out = {}
+    for b in ledger.get("bugs", []):
+        if b.get("status") == "open" and b.get("test") and b.get("jira"):
+            out[b["test"].split("::")[-1]] = b["jira"]
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -310,11 +369,11 @@ def main(argv: list[str] | None = None) -> int:
                   "  security add-generic-password -U -s gene2 -a QMETRY_API_KEY -w \"$(pbpaste)\"", file=sys.stderr)
             return 2
         print(f"QMetry host: {host_of(base)}   project: {project}   {'APPLY' if a.apply else 'DRY RUN: reading only'}")
-        s = Sync(Client(base, key), project, apply=a.apply, story_ids=jira_issue_ids)
+        s = Sync(Client(base, key), project, apply=a.apply, story_ids=jira_issue_ids, defect_ids=jira_issue_ids)
     if a.cmd == "cases":
         s.cases(cases)
     else:
-        s.results(a.slug, run_id, cases, outcomes)
+        s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root))
     if a.apply and s.tc_keys:
         out = root / "consolidated" / a.slug / "qmetry-cases.json"
         out.write_text(json.dumps(dict(sorted(s.tc_keys.items())), indent=2) + "\n")
