@@ -95,14 +95,14 @@ class Client:
     def update_case(self, cid, version_no, body):
         self._req("PUT", f"/testcases/{cid}/versions/{version_no}", json=body)
 
-    def search_cycles(self, pid, summary):
+    def search_cycles(self, pid, summary, max_results=50):
         # fields must be requested explicitly - without it the API omits summary entirely, which
         # made the "does this cycle already exist" check always false: found live (29 Sep) after
         # one suite's repeated CI runs had quietly created NINE duplicate cycles under the same
         # name, none of them ever reused. description is requested too: a rerun of the same run id
         # reads the env/version back out of it (see Sync.results), so without it here the same
         # field-omission bug would silently re-pick a new version on every rerun.
-        return self._req("POST", "/testcycles/search?maxResults=50&fields=summary,description",
+        return self._req("POST", f"/testcycles/search?maxResults={max_results}&fields=summary,description,key",
                          json={"filter": {"projectId": pid, "summary": summary}}).get("data", [])
 
     def create_cycle(self, body):
@@ -204,6 +204,8 @@ class Sync:
         self.story_ids = story_ids  # callable: [story keys] -> {key: Jira issue id}; None = no linking
         self.defect_ids = defect_ids  # callable: [jira keys] -> {key: Jira issue id}; None = no defect linking
         self.tc_keys: dict[str, str] = {}
+        self.new_cases: list[str] = []  # TC ids created in QMetry by this sync
+        self.run_info: dict = {}  # what results() did: cycle, env, version, defects (read by run_report.py)
         self.counts = collections.Counter()
         self.pid = client.project_id(project_key) if client else None
         if client and not self.pid:
@@ -243,6 +245,7 @@ class Sync:
                         self.c.update_case(h["id"], ver, {"description": case["description"], "isAutomated": True})
             else:
                 self.act("create", f"test case {case['summary']}")
+                self.new_cases.append(case["tc_id"])
                 if self.apply:
                     r = self.c.create_case({"projectId": self.pid, "summary": case["summary"], "description": case["description"],
                                             "isAutomated": True, "labels": [i for i in label_ids if i is not None],
@@ -306,7 +309,13 @@ class Sync:
             if self.c:
                 have_build = self.c.builds(self.pid)
                 if not version:
-                    version = pick_next_build_version(list(have_build.keys()))
+                    # one past the highest version this suite's own cycles used: correct in a fresh CI
+                    # checkout (QMetry holds the state), and back to 1.0 after a clean slate removes
+                    # the suite's cycles - without ever deleting a Build other projects may share.
+                    used = [m.group(1) for c in self.c.search_cycles(self.pid, f"gene2 {slug} ", max_results=500)
+                            if (c.get("summary") or "").startswith(f"gene2 {slug} ")
+                            and (m := re.search(r"Version: (\S+)", c.get("description") or ""))]
+                    version = pick_next_build_version(used)
                 if self.apply:
                     have_env = self.c.environments(self.pid)
                     env_id = have_env.get(env) or self.c.add_environment(self.pid, env)
@@ -318,6 +327,11 @@ class Sync:
             cyc = (self.c.create_cycle({"projectId": self.pid, "summary": summary, "labels": [i for i in live_label if i is not None],
                                         "description": f"Gen-e2 automated run {run_id}\nEnvironment: {env}\nVersion: {version}"})
                    if self.apply else {"id": None})
+            if self.apply and not cyc.get("key"):  # the create response may carry only the id
+                cyc = next((c for c in self.c.search_cycles(self.pid, summary) if c.get("summary") == summary), cyc)
+        self.run_info = {"run_id": run_id, "cycle_key": cyc.get("key"), "cycle_id": cyc.get("id"),
+                         "cycle_summary": summary, "cycle_created": not cycles, "env": env,
+                         "version": version, "defects": {}}
         linked = {x.get("summary"): x for x in (self.c.cycle_cases(cyc["id"]) if self.c and cyc.get("id") else [])}
         missing = [c for c in with_result if c["summary"] not in linked]
         if missing:
@@ -353,6 +367,7 @@ class Sync:
             ex = linked.get(c["summary"])
             if not ex:
                 continue
+            self.run_info.setdefault("defects", {})[c["tc_id"]] = key
             have = ({d.get("key") for d in self.c.case_defects(cyc["id"], ex["testCaseExecutionId"])}
                     if self.c else set())
             if key in have:
@@ -506,6 +521,11 @@ def main(argv: list[str] | None = None) -> int:
         out = root / "consolidated" / a.slug / "qmetry-cases.json"
         out.write_text(json.dumps(dict(sorted(s.tc_keys.items())), indent=2) + "\n")
         print(f"TC id -> QMetry key map: {out}")
+    if a.cmd == "results":
+        # what this sync did, next to the junit file, for tools/run_report.py
+        record = dict(s.run_info, applied=a.apply, new_cases=s.new_cases, tc_keys=s.tc_keys,
+                      counts=dict(s.counts), host=None if a.offline else host_of(base))
+        (pathlib.Path(a.junit).parent / "qmetry-run.json").write_text(json.dumps(record, indent=2) + "\n")
     print(f"\nsummary: {dict(s.counts)}")
     return 0
 

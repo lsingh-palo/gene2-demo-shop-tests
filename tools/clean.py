@@ -6,14 +6,21 @@
     gene2 clean --slug S --jira --apply           # + Jira: you TYPE the Jira host before anything is deleted
     gene2 clean --slug S --qmetry --apply         # + QMetry: you TYPE the Jira host (QMetry lives in it)
     [--protect LABEL]                             # never delete an issue carrying LABEL (repeatable)
+    [--reset-bugs]                                # with --jira: also every bug in the ledger, ledger cleared
 
 What is found, never by key number or range, only by label and marker:
   local   consolidated/<slug>/ and test_runs/<slug>-*/ that git does NOT track. A committed suite or a
-          frozen run is listed as kept and never deleted (remove those with a reviewed commit).
+          frozen run is listed as kept and never deleted (remove those with a reviewed commit); its
+          untracked run outputs (reports/, qmetry-version.json, qmetry-cases.json, app log) do go.
   jira    issues labelled `gene2-live` AND `gene2-suite-<slug>` (the bugs runs filed), and comments
           whose first line is a run marker `[gene2-live <slug> run ...]` or the story status marker
-          `[gene2-live <slug> story-status]` (on any issue: a duplicate bug, a story).
-  qmetry  test cases labelled `gene2-live` and `<slug>`; test cycles named `gene2 <slug> ...`.
+          `[gene2-live <slug> story-status]` (on any issue: a duplicate bug, a story). With
+          --reset-bugs, also every bug in the suite's ledger, by its fingerprint label
+          `gene2:<slug>:<bugkey>` (a bug filed before the gene2-live label existed has only that),
+          so a demo starts with no bug at all and every bug shown is filed during it.
+          Ledger entries of deleted issues are removed from bugs.json.
+  qmetry  test cases labelled `gene2-live` and `<slug>`; test cycles named `gene2 <slug> ...`, and with
+          them their executions (an execution only exists inside its cycle).
 
 Safety: dry run by default. Each remote delete asks you to type the host at the terminal; there is
 no flag that skips it, so a pipeline or an AI assistant cannot run it. Counts are printed before and
@@ -55,8 +62,14 @@ def _tracked(root: pathlib.Path, path: pathlib.Path) -> int:
     return len([l for l in r.stdout.splitlines() if l.strip()])
 
 
+RUN_OUTPUTS = ("reports", "qmetry-version.json", "qmetry-cases.json", "app-under-test.log")
+
+
 def local_plan(root: pathlib.Path, slug: str) -> dict:
-    cands = [root / "consolidated" / slug, *sorted((root / "test_runs").glob(f"{slug}-*"))]
+    suite = root / "consolidated" / slug
+    cands = [suite, *sorted((root / "test_runs").glob(f"{slug}-*"))]
+    if suite.exists() and _tracked(root, suite):  # a committed suite stays; its untracked run outputs go
+        cands += [suite / n for n in RUN_OUTPUTS]
     remove, kept = [], []
     for p in cands:
         if not p.exists():
@@ -76,9 +89,15 @@ def _labels(issue: dict) -> list[str]:
     return (issue.get("fields") or {}).get("labels") or []
 
 
-def jira_plan(client, project: str, slug: str, protect: list[str], extra_keys: list[str]) -> dict:
+def jira_plan(client, project: str, slug: str, protect: list[str], extra_keys: list[str],
+              fingerprints: list[str] = ()) -> dict:
     issues = client.search(f'project = "{project}" AND labels = "{LIVE}" AND labels = "{suite_label(slug)}"',
                            fields="summary,labels")
+    if fingerprints:  # --reset-bugs: the bugs this suite filed, found by their fingerprint label
+        seen = {i["key"] for i in issues}
+        fp = ", ".join(f'"{f}"' for f in fingerprints)
+        issues += [i for i in client.search(f'project = "{project}" AND labels in ({fp})', fields="summary,labels")
+                   if i["key"] not in seen]
     delete, protected = [], []
     for i in issues:
         (protected if set(_labels(i)) & set(protect) else delete).append(i)
@@ -112,6 +131,31 @@ def suite_issue_keys(root: pathlib.Path, slug: str) -> list[str]:
     return sorted(keys)
 
 
+def ledger_fingerprints(root: pathlib.Path, slug: str) -> list[str]:
+    """The fingerprint label jira_bug.py puts on every bug it files: gene2:<slug>:<bugkey>."""
+    bl = root / "consolidated" / slug / "bugs.json"
+    if not bl.exists():
+        return []
+    d = json.loads(bl.read_text())
+    return sorted(f"gene2:{slug}:{b['bugkey']}" for b in (d.get("bugs", []) if isinstance(d, dict) else d)
+                  if isinstance(b, dict) and b.get("bugkey"))
+
+
+def prune_ledger(root: pathlib.Path, slug: str, deleted_keys: set[str]) -> int:
+    """Drop ledger entries whose Jira issue was just deleted, so nothing links a bug that is gone and
+    a bug filed again starts a new entry (with a new filed date)."""
+    bl = root / "consolidated" / slug / "bugs.json"
+    if not bl.exists() or not deleted_keys:
+        return 0
+    d = json.loads(bl.read_text())
+    bugs = d.get("bugs", []) if isinstance(d, dict) else d
+    keep = [b for b in bugs if not (isinstance(b, dict) and b.get("jira") in deleted_keys)]
+    if len(keep) == len(bugs):
+        return 0
+    bl.write_text(json.dumps({"bugs": keep} if isinstance(d, dict) else keep, indent=2) + "\n")
+    return len(bugs) - len(keep)
+
+
 # ------------------------------------------------------------------------------------------ qmetry
 def _label_names(case: dict) -> set[str]:
     out = set()
@@ -126,7 +170,7 @@ def qmetry_plan(client, project: str, slug: str) -> dict:
         raise SystemExit(f"Jira project {project} is not QMetry-enabled (or not visible to this key)")
     cases = [c for c in client.cases_with_label(pid, LIVE) if {LIVE, slug} <= _label_names(c)]
     prefix = f"gene2 {slug} "
-    cycles = [c for c in client.search_cycles(pid, prefix) if (c.get("summary") or "").startswith(prefix)]
+    cycles = [c for c in client.search_cycles(pid, prefix, max_results=500) if (c.get("summary") or "").startswith(prefix)]
     return {"pid": pid, "cases": cases, "cycles": cycles}
 
 
@@ -184,7 +228,8 @@ def run(a, root: pathlib.Path, jira=None, qmetry=None, prompt=tty_prompt, projec
                 rc = 2
 
     if a.jira:
-        jp = jira_plan(jira, project, a.slug, a.protect, suite_issue_keys(root, a.slug))
+        fps = ledger_fingerprints(root, a.slug) if getattr(a, "reset_bugs", False) else []
+        jp = jira_plan(jira, project, a.slug, a.protect, suite_issue_keys(root, a.slug), fps)
         print(f"\nJIRA (project {project}): {len(jp['issues'])} issue(s), {len(jp['comments'])} comment(s)"
               + (f", {len(jp['protected'])} protected (kept)" if jp["protected"] else ""))
         for i in jp["issues"]:
@@ -199,8 +244,12 @@ def run(a, root: pathlib.Path, jira=None, qmetry=None, prompt=tty_prompt, projec
                     jira.delete_comment(key, cid)
                 for i in jp["issues"]:
                     jira.delete_issue(i["key"])
-                after = jira_plan(jira, project, a.slug, a.protect, suite_issue_keys(root, a.slug))
+                after = jira_plan(jira, project, a.slug, a.protect, suite_issue_keys(root, a.slug), fps)
                 print(f"  Jira after: {len(after['issues'])} issue(s), {len(after['comments'])} comment(s) left")
+                pruned = prune_ledger(root, a.slug, {i["key"] for i in jp["issues"]})
+                if pruned:
+                    print(f"  bug ledger: removed {pruned} entr{'y' if pruned == 1 else 'ies'} for the deleted issues "
+                          f"(consolidated/{a.slug}/bugs.json - commit and push it so CI stops linking them)")
             else:
                 rc = 2
 
@@ -221,6 +270,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--qmetry", action="store_true")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--protect", action="append", default=[], help="never delete an issue with this label")
+    ap.add_argument("--reset-bugs", action="store_true",
+                    help="with --jira: also delete every bug in the suite's ledger (found by its fingerprint label, "
+                         "even one filed before the gene2-live label existed) and clear those ledger entries")
     a = ap.parse_args(argv)
     root = pathlib.Path.cwd()
     jira = qmetry = None

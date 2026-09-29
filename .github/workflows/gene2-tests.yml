@@ -10,19 +10,27 @@
 #   https://qtmcloud.qmetry.com), JIRA_PROJECT_KEY, GENE2_TOOLS (where the harness tools live).
 #   Optional story status (one comment per Jira story, updated in place): secrets ATLASSIAN_EMAIL,
 #   ATLASSIAN_API_TOKEN, variable ATLASSIAN_BASE_URL.
+#   Optional GENE2_REPORT_URL: where the live report is served, when not <owner>.github.io/<repo>/.
+#
+# Levels: pull_request -> smoke, schedule -> extended, push -> functional, "Run workflow" (or
+# `gene2 ci trigger --level X`) -> smoke | functional | extended | full (every test but quarantined).
+# A manual run can also override GENE2_APP_START (for example to test another version of the app).
 #
 # Known bugs: @pytest.mark.bug tests are strict expected failures in ci mode. The job is green when
 # only known bugs fail, and red when a known bug is fixed (flip that test) or anything else fails.
 #
 # Image tag must match the Playwright version in consolidated/{slug}/requirements.txt.
 #
-# Live Allure report on GitHub Pages (push events only, not PR previews): one-time setup -
-# repo -> Settings -> Pages -> Source: "GitHub Actions". On a PRIVATE repo this needs GitHub
-# Pro/Team/Enterprise (GitHub Pages is a paid feature there, unlike GitLab Pages); the pages
-# job is set to continue-on-error so a missing plan never fails the run - the suite already
-# ran and reported by then. Without it, the Allure report is still a downloadable artifact.
+# Live Allure report on GitHub Pages, on every run except a PR preview (push, Run workflow,
+# nightly): the link is at the top of the run's summary page and the report opens in the browser,
+# with trend charts across runs and the run report (run-report.md, failed tests -> bugs) beside it.
+# One-time setup: repo -> Settings -> Pages -> Source: "GitHub Actions"; and if the github-pages
+# environment limits deployment branches, add the branches you run on. On a PRIVATE repo Pages
+# needs GitHub Pro/Team/Enterprise (unlike GitLab Pages); the pages job is continue-on-error so a
+# missing plan never fails the run. The zipped report stays under Artifacts either way.
 
 name: gene2-tests
+run-name: "gene2 ${{ inputs.level || (github.event_name == 'pull_request' && 'smoke') || (github.event_name == 'schedule' && 'extended') || 'functional' }} (${{ github.event_name }})"
 
 on:
   pull_request:
@@ -35,8 +43,12 @@ on:
       level:
         description: "Test level"
         type: choice
-        options: [smoke, functional, extended]
+        options: [smoke, functional, extended, full]
         default: functional
+      app_start:
+        description: "Optional: command that starts the app under test (overrides GENE2_APP_START)"
+        type: string
+        default: ""
 
 concurrency:
   group: gene2-${{ github.ref }}
@@ -55,6 +67,7 @@ jobs:
       GENE2_WORKERS: ${{ vars.GENE2_WORKERS || '3' }}
       GENE2_USERNAME: ${{ secrets.GENE2_USERNAME }}
       GENE2_PASSWORD: ${{ secrets.GENE2_PASSWORD }}
+      GENE2_REPORT_URL: ${{ vars.GENE2_REPORT_URL }}
       QMETRY_API_KEY: ${{ secrets.QMETRY_API_KEY }}   # optional; the sync step runs only when set
       ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}   # optional; the story status step runs only when set
     steps:
@@ -63,46 +76,49 @@ jobs:
       - name: Resolve test level
         id: level
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then echo "value=smoke" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "schedule" ]; then echo "value=extended" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "value=${{ inputs.level }}" >> "$GITHUB_OUTPUT"
-          else echo "value=functional" >> "$GITHUB_OUTPUT"; fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then L=smoke
+          elif [ "${{ github.event_name }}" = "schedule" ]; then L=extended
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then L="${{ inputs.level }}"
+          else L=functional; fi
+          if [ "$L" = full ]; then M="not flaky"; else M="$L"; fi
+          echo "value=$L" >> "$GITHUB_OUTPUT"
+          echo "marker=$M" >> "$GITHUB_OUTPUT"
+          echo "run_id=gh-${{ github.run_id }}-$L" >> "$GITHUB_OUTPUT"
+          URL="${GENE2_REPORT_URL:-$(python -c "import os;o,r=os.environ['GITHUB_REPOSITORY'].split('/');print(f'https://{o.lower()}.github.io/{r}/')")}"
+          echo "report_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Live report link (top of this page)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Pull request run: no live report (the zipped Allure report is under Artifacts below)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### [Open the Allure report for this run](${{ steps.level.outputs.report_url }})" >> "$GITHUB_STEP_SUMMARY"
+            echo "Published by the pages job about a minute after the tests finish; the run report is at [run-report.md](${{ steps.level.outputs.report_url }}run-report.md)." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Run suite (the same one command as on a laptop, consolidated/<slug>/run.sh)
         env:
-          GENE2_APP_START: ${{ vars.GENE2_APP_START }}
+          GENE2_APP_START: ${{ inputs.app_start || vars.GENE2_APP_START }}
         run: |
           bash "consolidated/${GENE2_TARGET_SLUG}/run.sh" --ci -v \
-            -m "${{ steps.level.outputs.value }}" \
+            -m "${{ steps.level.outputs.marker }}" \
             --junitxml="$GITHUB_WORKSPACE/report.xml" \
             --html="$GITHUB_WORKSPACE/report.html" --self-contained-html \
             --alluredir="$GITHUB_WORKSPACE/allure-results" --clean-alluredir
-
-      - name: Job summary
-        if: always()
-        run: |
-          echo "## Gen-e2 ${{ steps.level.outputs.value }} run" >> "$GITHUB_STEP_SUMMARY"
-          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import xml.etree.ElementTree as ET
-          try:
-              r = ET.parse("report.xml").getroot()
-              s = r if r.tag == "testsuite" else r.find("testsuite")
-              print(f"- tests: {s.get('tests')}  failures: {s.get('failures')}  errors: {s.get('errors')}  skipped: {s.get('skipped')}")
-          except Exception as e:
-              print(f"- could not parse report.xml: {e}")
-          PY
 
       - name: QMetry sync (cases + this run's results into a test cycle)
         if: always() && env.QMETRY_API_KEY != ''
         env:
           QMETRY_BASE_URL: ${{ vars.QMETRY_BASE_URL || 'https://qtmcloud.qmetry.com' }}
           JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY }}
+          ATLASSIAN_BASE_URL: ${{ vars.ATLASSIAN_BASE_URL }}
+          ATLASSIAN_EMAIL: ${{ secrets.ATLASSIAN_EMAIL }}
           CI: "true"
         run: |
           TOOLS="${GENE2_TOOLS:-tools}"
           HOST=$(python -c "import urllib.parse,os;print(urllib.parse.urlparse(os.environ['QMETRY_BASE_URL']).hostname)")
           python "$TOOLS/qmetry_sync.py" results --slug "$GENE2_TARGET_SLUG" --junit report.xml \
-            --run "gh-${{ github.run_id }}" --apply --confirm-host "$HOST"
+            --run "${{ steps.level.outputs.run_id }}" --apply --confirm-host "$HOST"
 
       - name: Story status (one comment per Jira story with its tests and this run's results)
         if: always() && env.ATLASSIAN_API_TOKEN != ''
@@ -114,7 +130,7 @@ jobs:
           TOOLS="${GENE2_TOOLS:-tools}"
           HOST=$(python -c "import urllib.parse,os;print(urllib.parse.urlparse(os.environ['ATLASSIAN_BASE_URL']).hostname)")
           python "$TOOLS/story_status.py" --slug "$GENE2_TARGET_SLUG" --junit report.xml \
-            --run "gh-${{ github.run_id }}" --apply --confirm-host "$HOST"
+            --run "${{ steps.level.outputs.run_id }}" --apply --confirm-host "$HOST"
 
       - name: Allure report (needs Node + Java; the playwright/python image has neither)
         if: always()
@@ -129,9 +145,31 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Trend history from the live report
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          mkdir -p allure-results/history
+          for f in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            curl -sfL "${{ steps.level.outputs.report_url }}history/$f" -o "allure-results/history/$f" || rm -f "allure-results/history/$f"
+          done
+
       - name: Generate the Allure report
         if: always()
         run: npx --yes allure-commandline generate allure-results -o allure-report --clean
+
+      - name: Run report (links, QMetry cycle, failed tests -> bugs, new test cases; also on this page)
+        if: always()
+        env:
+          ATLASSIAN_BASE_URL: ${{ vars.ATLASSIAN_BASE_URL }}
+          CI: "true"
+        run: |
+          TOOLS="${GENE2_TOOLS:-tools}"
+          python "$TOOLS/run_report.py" --slug "$GENE2_TARGET_SLUG" --junit report.xml \
+            --run "${{ steps.level.outputs.run_id }}" --level "${{ steps.level.outputs.value }}" --where ci \
+            --report-url "${{ steps.level.outputs.report_url }}" --out-dir run-reports --copy-to allure-report \
+            || echo "no run report: see the log above"
+          cp report.xml allure-report/junit.xml 2>/dev/null || true
+          cp qmetry-run.json allure-report/qmetry-run.json 2>/dev/null || true
 
       - name: Stakeholder PDF (verdict, by module and requirement, failures with evidence, known bugs, env)
         if: always()
@@ -141,6 +179,7 @@ jobs:
         run: |
           python "${GENE2_TOOLS:-tools}/allure_pdf.py" --slug "$GENE2_TARGET_SLUG" --results allure-results \
             --out test-report.pdf || echo "no PDF: see the log above"
+          cp test-report.pdf allure-report/ 2>/dev/null || true
 
       - name: Upload artifacts
         if: always()
@@ -151,16 +190,14 @@ jobs:
             report.html
             report.xml
             test-report.pdf
+            run-reports/
             allure-report/
             consolidated/${{ env.GENE2_TARGET_SLUG }}/reports/screenshots/
             reports/traces/
           retention-days: 30
 
-      # Only on a push (not every PR preview): a live, clickable Allure report, the same
-      # experience a GitLab Pages job gives - so you don't have to download and unzip an artifact
-      # to see a result. One-time setup: repo -> Settings -> Pages -> Source: "GitHub Actions".
       - name: Package the Allure report for Pages
-        if: always() && github.event_name == 'push'
+        if: always() && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: allure-report
@@ -169,7 +206,7 @@ jobs:
     # continue-on-error: GitHub Pages needs a paid plan for a PRIVATE repo (GitLab gives this free);
     # on a repo without Pages enabled this job fails, and that must never turn the whole run red -
     # the suite already ran and reported by the time this job starts.
-    if: always() && github.event_name == 'push'
+    if: always() && github.event_name != 'pull_request'
     needs: test
     continue-on-error: true
     runs-on: ubuntu-latest
