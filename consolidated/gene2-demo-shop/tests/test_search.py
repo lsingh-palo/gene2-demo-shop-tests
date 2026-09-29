@@ -51,6 +51,7 @@ def test_kitchen_in_stock_fits_one_page(page: Page, base_url, credentials):
     expect(page.locator("[data-test='page-next']")).to_be_hidden()
 
 
+@pytest.mark.smoke
 @pytest.mark.functional
 def test_search_ignores_case(page: Page, base_url, credentials):
     """TC040 [key:107f484cbc64] [plan:P-023]

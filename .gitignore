@@ -5,3 +5,9 @@ allure-results/
 allure-report/
 *.pyc
 gene2.db
+consolidated/*/.gene2-installed
+consolidated/*/app-under-test.log
+consolidated/*/reports/
+.gene2-local/
+consolidated/*/qmetry-cases.json
+consolidated/*/qmetry-version.json

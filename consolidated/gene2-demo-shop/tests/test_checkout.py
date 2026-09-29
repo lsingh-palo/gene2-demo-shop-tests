@@ -44,6 +44,7 @@ def test_postcode_is_required(page: Page, base_url, credentials):
     expect(page).to_have_url(re.compile(r"/checkout\.html$"))
 
 
+@pytest.mark.smoke
 @pytest.mark.functional
 def test_tax_is_eight_percent_of_subtotal(page: Page, base_url, credentials):
     """TC030 [key:68bc7fc78a9e] [plan:P-011]

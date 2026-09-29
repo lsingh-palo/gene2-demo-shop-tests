@@ -37,6 +37,7 @@ def test_one_review_per_customer(page: Page, base_url, credentials):
     expect(page.locator(ITEM)).to_have_count(1)
 
 
+@pytest.mark.extended
 @pytest.mark.functional
 def test_review_text_length_limits(page: Page, base_url, credentials):
     """TC061 [key:92f65d87aec3] [plan:P-029]

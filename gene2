@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# ./gene2 <command>  - one short command per step (./gene2 help lists them). Uses the suite's own
+# Python environment, created on first use, so it works the same from a terminal or any AI tool.
+set -euo pipefail
+export PYTHONWARNINGS=ignore PIP_DISABLE_PIP_VERSION_CHECK=1
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SLUG="${GENE2_TARGET_SLUG:-gene2-demo-shop}"
+VENV="$ROOT/consolidated/$SLUG/.venv"
+[ -x "$VENV/bin/python" ] || python3 -m venv "$VENV"
+"$VENV/bin/python" -c "import requests" 2>/dev/null || "$VENV/bin/python" -m pip install -q requests
+exec "$VENV/bin/python" "$ROOT/tools/cli.py" "$@"

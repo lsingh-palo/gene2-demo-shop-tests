@@ -8,6 +8,7 @@ import re
 from _lib.flows import auth_flow
 
 
+@pytest.mark.smoke
 @pytest.mark.functional
 def test_catalog_requires_login(page: Page, base_url):
     """TC004 [key:5631d3e93ff7] [plan:P-004] provenance: observed."""
@@ -24,6 +25,7 @@ def test_locked_account_is_refused(page: Page, base_url, credentials):
     expect(page.locator("[data-test='error']")).to_have_text("This account is locked. Contact support.")
 
 
+@pytest.mark.smoke
 @pytest.mark.functional
 def test_login_lands_on_catalog(page: Page, base_url, credentials):
     """TC001 [key:ab680631d87c] [plan:P-001] provenance: observed.
@@ -42,6 +44,7 @@ def test_login_wrong_password_shows_mismatch_error(page: Page, base_url):
     expect(page).to_have_url(re.compile(r"/index\.html$|/$"))
 
 
+@pytest.mark.extended
 @pytest.mark.functional
 def test_locked_account_cannot_reach_catalog(page: Page, base_url, credentials):
     """TC005 [key:fe00ed535b25] [plan:P-018]
@@ -53,6 +56,7 @@ def test_locked_account_cannot_reach_catalog(page: Page, base_url, credentials):
     expect(page).to_have_url(re.compile(r"index\.html\?error=login-required$"))
 
 
+@pytest.mark.extended
 @pytest.mark.functional
 def test_customer_cannot_use_admin_page(page: Page, base_url, credentials):
     """TC006 [key:5830a8821b07] [plan:P-045]
