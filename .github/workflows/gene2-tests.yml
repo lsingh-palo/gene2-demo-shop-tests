@@ -15,6 +15,9 @@
 # only known bugs fail, and red when a known bug is fixed (flip that test) or anything else fails.
 #
 # Image tag must match the Playwright version in consolidated/{slug}/requirements.txt.
+#
+# Live Allure report on GitHub Pages (push events only, not PR previews): one-time setup -
+# repo -> Settings -> Pages -> Source: "GitHub Actions". No further configuration needed.
 
 name: gene2-tests
 
@@ -149,3 +152,27 @@ jobs:
             consolidated/${{ env.GENE2_TARGET_SLUG }}/reports/screenshots/
             reports/traces/
           retention-days: 30
+
+      # Only on a push (not every PR preview): a live, clickable Allure report, the same
+      # experience a GitLab Pages job gives - so you don't have to download and unzip an artifact
+      # to see a result. One-time setup: repo -> Settings -> Pages -> Source: "GitHub Actions".
+      - name: Package the Allure report for Pages
+        if: always() && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+  pages:
+    if: always() && github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the Allure report to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
