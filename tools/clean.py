@@ -256,6 +256,21 @@ def run(a, root: pathlib.Path, jira=None, qmetry=None, prompt=tty_prompt, projec
             else:
                 rc = 2
 
+    if a.jira and getattr(a, "reset_bugs", False) and fps:
+        # a bug another clean already deleted (the harness copy and an app repo share one Jira) still
+        # sits in this ledger: drop every ledger entry whose fingerprinted bug is gone from Jira
+        alive = {i["key"] for i in jira.search(f'project = "{project}" AND labels in ({", ".join(f"{chr(34)}{f}{chr(34)}" for f in fps)})',
+                                               fields="summary")}
+        ledger = json.loads((root / "consolidated" / a.slug / "bugs.json").read_text()).get("bugs", [])
+        gone = {b["jira"] for b in ledger if b.get("jira") and b.get("bugkey") and b["jira"] not in alive}
+        if gone:
+            if a.apply:
+                n = prune_ledger(root, a.slug, gone)
+                print(f"  bug ledger: removed {n} entr{'y' if n == 1 else 'ies'} for bugs no longer in Jira ({', '.join(sorted(gone))})")
+            else:
+                print(f"  bug ledger: would remove {len(gone)} entr{'y' if len(gone) == 1 else 'ies'} for bugs no longer in Jira "
+                      f"({', '.join(sorted(gone))})")
+
     # local last: the remote plans read the suite's requirements map and bug ledger
     if a.apply:
         for p in lp["remove"]:
