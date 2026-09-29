@@ -99,8 +99,10 @@ class Client:
         # fields must be requested explicitly - without it the API omits summary entirely, which
         # made the "does this cycle already exist" check always false: found live (29 Sep) after
         # one suite's repeated CI runs had quietly created NINE duplicate cycles under the same
-        # name, none of them ever reused.
-        return self._req("POST", "/testcycles/search?maxResults=50&fields=summary",
+        # name, none of them ever reused. description is requested too: a rerun of the same run id
+        # reads the env/version back out of it (see Sync.results), so without it here the same
+        # field-omission bug would silently re-pick a new version on every rerun.
+        return self._req("POST", "/testcycles/search?maxResults=50&fields=summary,description",
                          json={"filter": {"projectId": pid, "summary": summary}}).get("data", [])
 
     def create_cycle(self, body):
@@ -275,26 +277,42 @@ class Sync:
 
     def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str],
                 bugs_by_test: dict[str, str] | None = None, env: str = "test",
-                version: str | None = None) -> None:
+                version: str | None = None) -> str:
         """One cycle per run; link every case with a result under a QMetry Environment and Build
-        (find-or-created by name; version defaults to auto-incrementing 1.0, 1.1, 1.2, ... via
-        next_version - never given, never repeated); set each execution's result; attach each
-        failed test's open Jira bug to its execution as a QMetry defect, so the cycle and the bug
-        point at each other (bugs_by_test: test_name -> Jira key, from the bug ledger)."""
+        (find-or-created by name; version defaults to one past the highest Build already in the
+        project - read from QMetry itself via pick_next_build_version, not a local file, so it is
+        correct even in CI where every run is a fresh checkout with no state of its own). A rerun
+        of the SAME run id reuses the cycle's own env/version instead of advancing again, so it
+        stays a true no-op. Sets each execution's result; attaches each failed test's open Jira
+        bug to its execution as a QMetry defect, so the cycle and the bug point at each other
+        (bugs_by_test: test_name -> Jira key, from the bug ledger)."""
         ids = self.cases(cases)
         summary = f"gene2 {slug} {run_id}"
         cycles = [c for c in (self.c.search_cycles(self.pid, summary) if self.c else []) if c.get("summary") == summary]
         with_result = [c for c in cases if c["test_name"] in outcomes]
         env_id = build_id = None
-        if self.c and self.apply:
-            have_env = self.c.environments(self.pid)
-            env_id = have_env.get(env) or self.c.add_environment(self.pid, env)
-            have_build = self.c.builds(self.pid)
-            build_id = have_build.get(version) or self.c.add_build(self.pid, version)
         if cycles:
+            # this run's cycle already exists (a rerun of the same run id): reuse the env/version
+            # it was created with instead of picking a new one, so a rerun stays a true no-op.
             cyc = cycles[0]
             self.act("unchanged", f"cycle {cyc.get('key')} {summary}")
+            m = re.search(r"Environment: (.+)\nVersion: (.+)", cyc.get("description") or "")
+            if m:
+                env, version = m.group(1), m.group(2)
+            if self.c and self.apply:
+                env_id = self.c.environments(self.pid).get(env)
+                build_id = self.c.builds(self.pid).get(version)
         else:
+            if self.c:
+                have_build = self.c.builds(self.pid)
+                if not version:
+                    version = pick_next_build_version(list(have_build.keys()))
+                if self.apply:
+                    have_env = self.c.environments(self.pid)
+                    env_id = have_env.get(env) or self.c.add_environment(self.pid, env)
+                    build_id = have_build.get(version) or self.c.add_build(self.pid, version)
+            elif not version:
+                version = "1.0"
             self.act("create", f"test cycle {summary!r} with {len(with_result)} cases (env {env}, version {version})")
             live_label = self._label_ids([LIVE])
             cyc = (self.c.create_cycle({"projectId": self.pid, "summary": summary, "labels": [i for i in live_label if i is not None],
@@ -320,6 +338,7 @@ class Sync:
             if self.apply and ex:
                 self.c.set_result(cyc["id"], ex["testCaseExecutionId"], result_ids[want])
         self._attach_defects(cyc, with_result, linked, outcomes, bugs_by_test or {})
+        return version
 
     def _attach_defects(self, cyc, with_result, linked, outcomes, bugs_by_test: dict[str, str]) -> None:
         """Link the open Jira bug of every failed test to its QMetry execution (idempotent: only
@@ -361,6 +380,21 @@ def jira_issue_ids(keys: list[str]) -> dict[str, str]:
         return {}
     jql = f"key in ({', '.join(keys)})"
     return {i["key"]: i["id"] for i in client.search(jql, fields="summary")}
+
+
+def pick_next_build_version(existing_names: list[str]) -> str:
+    """1.0 the first time; otherwise one past the highest N.M name already in QMetry. Reading this
+    from QMetry's own Builds, not a local file, is what makes it correct in CI: every run is a
+    fresh checkout with no state of its own, but the project's builds persist between runs."""
+    best = (0, -1)
+    for name in existing_names:
+        major, _, minor = str(name).partition(".")
+        try:
+            pair = (int(major), int(minor or 0))
+        except ValueError:
+            continue
+        best = max(best, pair)
+    return f"{best[0]}.{best[1] + 1}" if best != (0, -1) else "1.0"
 
 
 def next_version(slug: str, root: pathlib.Path, explicit: str | None = None) -> str:
@@ -441,7 +475,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "results" and not a.junit:
         sys.exit("results needs --junit")
     run_id = a.run or (pathlib.Path(a.junit).resolve().parents[1].name if a.junit else "")
-    version = next_version(a.slug, root, a.version) if a.cmd == "results" else a.version
+    # --offline has no QMetry to read existing Builds from, so it keeps the local-file auto-increment;
+    # otherwise results() itself picks the next version from QMetry's own Builds (see pick_next_build_version).
+    version = next_version(a.slug, root, a.version) if (a.cmd == "results" and a.offline) else a.version
     import _secrets
     project = _secrets.get("JIRA_PROJECT_KEY") or "PROJECT"
     if a.offline:
@@ -464,7 +500,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "cases":
         s.cases(cases)
     else:
-        s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version)
+        version = s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version)
         write_allure_environment(find_allure_results(a.slug, a.junit, root), a.env, version, run_id)
     if a.apply and s.tc_keys:
         out = root / "consolidated" / a.slug / "qmetry-cases.json"
