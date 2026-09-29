@@ -32,6 +32,7 @@ def test_badge_hidden_when_cart_empty(page: Page, base_url, credentials):
     expect(page.locator(BADGE)).to_be_hidden()
 
 
+@pytest.mark.smoke
 @pytest.mark.functional
 def test_badge_increments_on_add(page: Page, base_url, credentials):
     """TC020 [key:f0f7368d9d61] [plan:P-008]

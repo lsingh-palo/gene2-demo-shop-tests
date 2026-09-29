@@ -106,8 +106,13 @@ class Client:
     def create_cycle(self, body):
         return self._req("POST", "/testcycles", json=body)
 
-    def link_cases(self, cycle_id, cases):
-        self._req("POST", f"/testcycles/{cycle_id}/testcases", json={"testCases": cases})
+    def link_cases(self, cycle_id, cases, environment_id=None, build_id=None):
+        body = {"testCases": cases}
+        if environment_id is not None:
+            body["environmentId"] = environment_id
+        if build_id is not None:
+            body["buildId"] = build_id
+        self._req("POST", f"/testcycles/{cycle_id}/testcases", json=body)
 
     def cycle_cases(self, cycle_id):
         # fields must be requested explicitly - without it the API omits summary AND
@@ -142,6 +147,20 @@ class Client:
 
     def set_result(self, cycle_id, execution_id, result_id):
         self._req("PUT", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}", json={"executionResultId": result_id})
+
+    def environments(self, pid):
+        d = self._req("GET", f"/projects/{pid}/environments")
+        return {e["name"]: e["id"] for e in (d if isinstance(d, list) else d.get("data", []))}
+
+    def add_environment(self, pid, name):
+        return self._req("POST", f"/projects/{pid}/environments", json={"name": name}).get("id")
+
+    def builds(self, pid):
+        d = self._req("GET", f"/projects/{pid}/builds")
+        return {b["name"]: b["id"] for b in (d if isinstance(d, list) else d.get("data", []))}
+
+    def add_build(self, pid, name):
+        return self._req("POST", f"/projects/{pid}/builds", json={"name": name}).get("id")
 
     def case_defects(self, cycle_id, execution_id):
         d = self._req("POST", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}/defects", json={"filter": {}})
@@ -255,29 +274,39 @@ class Sync:
                     self.c.link_requirements(hit["id"], hit["versionNo"], req_ids)
 
     def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str],
-                bugs_by_test: dict[str, str] | None = None) -> None:
-        """One cycle per run; link every case with a result; set each execution's result; attach
-        each failed test's open Jira bug to its execution as a QMetry defect, so the cycle and the
-        bug point at each other (bugs_by_test: test_name -> Jira key, from the bug ledger)."""
+                bugs_by_test: dict[str, str] | None = None, env: str = "test",
+                version: str | None = None) -> None:
+        """One cycle per run; link every case with a result under a QMetry Environment and Build
+        (find-or-created by name; version defaults to auto-incrementing 1.0, 1.1, 1.2, ... via
+        next_version - never given, never repeated); set each execution's result; attach each
+        failed test's open Jira bug to its execution as a QMetry defect, so the cycle and the bug
+        point at each other (bugs_by_test: test_name -> Jira key, from the bug ledger)."""
         ids = self.cases(cases)
         summary = f"gene2 {slug} {run_id}"
         cycles = [c for c in (self.c.search_cycles(self.pid, summary) if self.c else []) if c.get("summary") == summary]
         with_result = [c for c in cases if c["test_name"] in outcomes]
+        env_id = build_id = None
+        if self.c and self.apply:
+            have_env = self.c.environments(self.pid)
+            env_id = have_env.get(env) or self.c.add_environment(self.pid, env)
+            have_build = self.c.builds(self.pid)
+            build_id = have_build.get(version) or self.c.add_build(self.pid, version)
         if cycles:
             cyc = cycles[0]
             self.act("unchanged", f"cycle {cyc.get('key')} {summary}")
         else:
-            self.act("create", f"test cycle {summary!r} with {len(with_result)} cases")
+            self.act("create", f"test cycle {summary!r} with {len(with_result)} cases (env {env}, version {version})")
             live_label = self._label_ids([LIVE])
             cyc = (self.c.create_cycle({"projectId": self.pid, "summary": summary, "labels": [i for i in live_label if i is not None],
-                                        "description": f"Gen-e2 automated run {run_id}"}) if self.apply else {"id": None})
+                                        "description": f"Gen-e2 automated run {run_id}\nEnvironment: {env}\nVersion: {version}"})
+                   if self.apply else {"id": None})
         linked = {x.get("summary"): x for x in (self.c.cycle_cases(cyc["id"]) if self.c and cyc.get("id") else [])}
         missing = [c for c in with_result if c["summary"] not in linked]
         if missing:
             self.act("link", f"{len(missing)} case(s) to the cycle")
             if self.apply:
                 self.c.link_cases(cyc["id"], [{"id": ids[c["tc_id"]]["id"], "versionNo": ids[c["tc_id"]]["versionNo"]}
-                                              for c in missing if c["tc_id"] in ids])
+                                              for c in missing if c["tc_id"] in ids], env_id, build_id)
                 linked = {x.get("summary"): x for x in self.c.cycle_cases(cyc["id"])}
         result_ids = self.c.result_ids(self.pid) if self.c else {}
         for c in with_result:
@@ -334,6 +363,55 @@ def jira_issue_ids(keys: list[str]) -> dict[str, str]:
     return {i["key"]: i["id"] for i in client.search(jql, fields="summary")}
 
 
+def next_version(slug: str, root: pathlib.Path, explicit: str | None = None) -> str:
+    """The version to record on this run's cycle: given explicitly, or the next one after the
+    last auto-picked version for this slug (1.0 the first time, then 1.1, 1.2, ... never reused,
+    tracked in consolidated/<slug>/qmetry-version.json so a rerun does not repeat "1.0")."""
+    state = root / "consolidated" / slug / "qmetry-version.json"
+    if explicit:
+        if state.exists():
+            d = json.loads(state.read_text())
+        else:
+            d = {}
+        d["version"] = explicit
+        state.parent.mkdir(parents=True, exist_ok=True)
+        state.write_text(json.dumps(d, indent=2) + "\n")
+        return explicit
+    if not state.exists():
+        version = "1.0"
+    else:
+        last = json.loads(state.read_text()).get("version", "1.0")
+        major, _, minor = last.partition(".")
+        try:
+            version = f"{major}.{int(minor or 0) + 1}"
+        except ValueError:
+            version = "1.0"
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text(json.dumps({"version": version}, indent=2) + "\n")
+    return version
+
+
+def find_allure_results(slug: str, junit: str | None, root: pathlib.Path) -> pathlib.Path:
+    """Where allure-results actually is differs by how the run was started (a local run.sh puts it
+    under the suite's own reports/, a CI run points --alluredir at the repo root) - try the real
+    candidates rather than guessing one path from --junit's location."""
+    candidates = [root / "allure-results", root / "consolidated" / slug / "reports" / "allure-results"]
+    if junit:
+        j = pathlib.Path(junit).resolve()
+        candidates = [j.parent / "allure-results", j.parent.parent / "allure-results"] + candidates
+    return next((c for c in candidates if c.exists()), candidates[0])
+
+
+def write_allure_environment(results_dir: pathlib.Path, env: str, version: str, run_id: str) -> None:
+    """Allure shows a properties file at the root of allure-results as an "Environment" panel on
+    the report - this is the one place Allure natively supports this, so nothing custom needed on
+    the report-generation side."""
+    if not results_dir.exists():
+        return
+    (results_dir / "environment.properties").write_text(
+        f"Environment={env}\nVersion={version}\nRun={run_id}\n")
+
+
 def bugs_by_test(slug: str, root: pathlib.Path) -> dict[str, str]:
     """test_name -> Jira key, for every OPEN bug in the suite's ledger (bugs.json)."""
     import bug_ledger
@@ -354,6 +432,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--confirm-host")
     ap.add_argument("--offline", action="store_true")
+    ap.add_argument("--env", default="test", help="QMetry Environment name (default: test)")
+    ap.add_argument("--version", help="QMetry Build name; default: auto-increment 1.0, 1.1, 1.2, ... (never repeated)")
     a = ap.parse_args(argv)
     root = pathlib.Path.cwd()  # the project, like every other tool
     cases = manifest_cases(a.slug, root)
@@ -361,6 +441,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "results" and not a.junit:
         sys.exit("results needs --junit")
     run_id = a.run or (pathlib.Path(a.junit).resolve().parents[1].name if a.junit else "")
+    version = next_version(a.slug, root, a.version) if a.cmd == "results" else a.version
     import _secrets
     project = _secrets.get("JIRA_PROJECT_KEY") or "PROJECT"
     if a.offline:
@@ -383,7 +464,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "cases":
         s.cases(cases)
     else:
-        s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root))
+        s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version)
+        write_allure_environment(find_allure_results(a.slug, a.junit, root), a.env, version, run_id)
     if a.apply and s.tc_keys:
         out = root / "consolidated" / a.slug / "qmetry-cases.json"
         out.write_text(json.dumps(dict(sorted(s.tc_keys.items())), indent=2) + "\n")
