@@ -44,6 +44,7 @@ def test_login_wrong_password_shows_mismatch_error(page: Page, base_url):
     expect(page).to_have_url(re.compile(r"/index\.html$|/$"))
 
 
+@pytest.mark.extended
 @pytest.mark.functional
 def test_locked_account_cannot_reach_catalog(page: Page, base_url, credentials):
     """TC005 [key:fe00ed535b25] [plan:P-018]
@@ -55,6 +56,7 @@ def test_locked_account_cannot_reach_catalog(page: Page, base_url, credentials):
     expect(page).to_have_url(re.compile(r"index\.html\?error=login-required$"))
 
 
+@pytest.mark.extended
 @pytest.mark.functional
 def test_customer_cannot_use_admin_page(page: Page, base_url, credentials):
     """TC006 [key:5830a8821b07] [plan:P-045]
