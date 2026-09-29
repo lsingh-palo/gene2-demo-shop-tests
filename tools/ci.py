@@ -200,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("trigger")
-    t.add_argument("--level", required=True, choices=["smoke", "functional", "extended", "full"])
+    t.add_argument("--level", required=True, choices=["smoke", "functional", "extended", "exploratory", "full"])
     t.add_argument("--app-start", default="", help="override GENE2_APP_START for this run (e.g. another app version)")
     t.add_argument("--ref")
     t.add_argument("--wait", action="store_true")

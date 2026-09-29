@@ -14,7 +14,7 @@
 #   Optional GENE2_REPORT_URL: where the live report is served, when not <owner>.github.io/<repo>/.
 #
 # Levels: pull_request -> smoke, schedule -> extended, push -> functional, "Run workflow" (or
-# `gene2 ci trigger --level X`) -> smoke | functional | extended | full (every test but quarantined).
+# `gene2 ci trigger --level X`) -> smoke | functional | extended | exploratory | full (every test but quarantined).
 # A manual run can also override GENE2_APP_START (for example to test another version of the app).
 #
 # Known bugs: @pytest.mark.bug tests are strict expected failures in ci mode. The job is green when
@@ -44,7 +44,7 @@ on:
       level:
         description: "Test level"
         type: choice
-        options: [smoke, functional, extended, full]
+        options: [smoke, functional, extended, exploratory, full]
         default: functional
       app_start:
         description: "Optional: command that starts the app under test (overrides GENE2_APP_START)"

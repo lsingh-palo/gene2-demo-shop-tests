@@ -5,12 +5,14 @@
     ./gene2 clean [--apply]              what runs created in Jira + QMetry, and local leftovers; --apply
                                          deletes it after YOU type the Jira host (so no script or AI can)
     ./gene2 clean local                  local run leftovers only (no host to type)
-    ./gene2 run <level> [v2] [headed]    run here: smoke | functional | extended | full, on app v1 (or v2);
+    ./gene2 run <level> [v2] [headed]    run here: smoke | functional | extended | exploratory | full, on v1 (or v2);
                                          then QMetry sync (env test, next version) and the run report
     ./gene2 ci <level> [v2]              the same level in GitHub Actions: start, wait, fetch the report
     ./gene2 triage [run id]              evidence and a proposed class for every failure of a run
     ./gene2 accept [run id]              confirm every proposed product/known-bug row (after you agreed)
     ./gene2 bugs [run id] [--dry-run]    file the confirmed bugs in Jira now, attach them in QMetry, refresh
+    ./gene2 promote <test> --module M --title "T"   add a new exploratory test to the suite manifest
+                                         (scenario key, next TC id), so CI syncs it to QMetry as a new case
     ./gene2 report [run id] | status     one run's report | the table of every run
     ./gene2 allure [ci]                  open the Allure report in the browser (last local run | live CI)
     ./gene2 open ci|repo|actions         open the CI run / the repo / the Actions page
@@ -42,7 +44,7 @@ SLUG = os.environ.get("GENE2_TARGET_SLUG") or next(p.name for p in sorted((ROOT 
 SUITE = ROOT / "consolidated" / SLUG
 RUNS = ROOT / ".gene2-local" / "runs"
 PY = sys.executable
-LEVELS = ("smoke", "functional", "extended", "full")
+LEVELS = ("smoke", "functional", "extended", "exploratory", "full")
 
 
 def sh(*args, check=False, env=None, cwd=ROOT) -> int:
@@ -280,13 +282,71 @@ def c_open(args):
     return 0
 
 
+STOP_WORDS = {"the", "a", "an", "with", "should", "and", "or", "of", "to", "on", "in", "for"}
+
+
+def scenario_key(module: str, title: str, test_type: str) -> str:
+    """The harness's scenario key (tools/suite_audit.py): the same scenario always gets the same key."""
+    import hashlib
+    words = [w for w in re.sub(r"[^a-z0-9\s]", " ", title.lower()).split() if w not in STOP_WORDS]
+    return hashlib.sha1(f"{module.strip().lower()}|{' '.join(words)}|{test_type.strip().lower()}".encode()).hexdigest()[:12]
+
+
+def c_promote(args):
+    import argparse
+    ap = argparse.ArgumentParser(prog="./gene2 promote")
+    ap.add_argument("test")
+    ap.add_argument("--module", required=True)
+    ap.add_argument("--title", required=True, help="the expected behaviour, one line")
+    ap.add_argument("--requirement", action="append", default=[])
+    a = ap.parse_args(args)
+    src = next((f for f in sorted((SUITE / "tests").glob("test_*.py")) if f"def {a.test}(" in f.read_text()), None)
+    if not src:
+        sys.exit(f"no test named {a.test} under {SUITE / 'tests'}: write it first")
+    text = src.read_text()
+    lines = text.splitlines()
+    i = next(n for n, l in enumerate(lines) if l.lstrip().startswith(f"def {a.test}("))
+    decorators = [l.strip() for l in lines[max(0, i - 4):i] if l.strip().startswith("@")]
+    if "@pytest.mark.exploratory" not in decorators:
+        sys.exit(f"mark it first: add @pytest.mark.exploratory above def {a.test}( in {src.name}")
+    mpath = SUITE / "suite-manifest.json"
+    manifest = json.loads(mpath.read_text())
+    key = scenario_key(a.module, a.title, "exploratory")
+    if any(s["key"] == key or s["test_name"] == a.test for s in manifest["scenarios"]):
+        sys.exit(f"already in the manifest ({key}): nothing to add")
+    tc = "TC%03d" % (max(int(s["tc_id"][2:]) for s in manifest["scenarios"]) + 1)
+    today = time.strftime("%Y%m%d")
+    manifest["scenarios"].append({
+        "key": key, "tc_id": tc, "level": "exploratory", "module": a.module, "title": a.title, "type": "exploratory",
+        "test_file": str(src.relative_to(SUITE)), "test_name": a.test, "app": "primary", "state": "active",
+        "orphan": False, "source_run": f"exploratory-{today}", "last_verified_run": f"exploratory-{today}",
+        "verified_count": 0, "trust": "provisional",
+        "provenance": f"found in an exploratory session on {time.strftime('%Y-%m-%d')}",
+        "plan_step": "", "plan_file": "", "requirement": a.requirement})
+    manifest["updated"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    mpath.write_text(json.dumps(manifest, indent=2) + "\n")
+    j = i + 1
+    tag = f"{tc} [key:{key}] [exploratory]"
+    if j < len(lines) and lines[j].strip().startswith('"""'):
+        if "[key:" not in lines[j]:
+            lines[j] = lines[j].replace('"""', f'"""{tag} ', 1)
+    else:
+        indent = re.match(r"\s*", lines[i]).group(0) + "    "
+        lines.insert(j, f'{indent}"""{tag} provenance: found in an exploratory session."""')
+    src.write_text("\n".join(lines) + ("\n" if text.endswith("\n") else ""))
+    print(f"added {tc} [{key}] {a.title} ({a.module}) <- {src.relative_to(ROOT)}::{a.test}")
+    print("next: ./gene2 run exploratory v2 (see it run and sync as a new QMetry case), then commit the test and "
+          "suite-manifest.json and push; ./gene2 ci full (or ci exploratory) shows it in CI")
+    return 0
+
+
 def c_tool(args):
     return tool(args[0] if args[0].endswith(".py") else f"{args[0]}.py", *args[1:])
 
 
 def main(argv: list[str]) -> int:
     cmds = {"preflight": c_preflight, "clean": c_clean, "run": c_run, "ci": c_ci, "triage": c_triage,
-            "accept": c_accept, "bugs": c_bugs, "report": c_report, "status": c_status, "allure": c_allure,
+            "accept": c_accept, "bugs": c_bugs, "promote": c_promote, "report": c_report, "status": c_status, "allure": c_allure,
             "open": c_open, "tool": c_tool}
     if not argv or argv[0] not in cmds:
         print(__doc__)
