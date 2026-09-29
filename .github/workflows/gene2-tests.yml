@@ -17,7 +17,10 @@
 # Image tag must match the Playwright version in consolidated/{slug}/requirements.txt.
 #
 # Live Allure report on GitHub Pages (push events only, not PR previews): one-time setup -
-# repo -> Settings -> Pages -> Source: "GitHub Actions". No further configuration needed.
+# repo -> Settings -> Pages -> Source: "GitHub Actions". On a PRIVATE repo this needs GitHub
+# Pro/Team/Enterprise (GitHub Pages is a paid feature there, unlike GitLab Pages); the pages
+# job is set to continue-on-error so a missing plan never fails the run - the suite already
+# ran and reported by then. Without it, the Allure report is still a downloadable artifact.
 
 name: gene2-tests
 
@@ -163,8 +166,12 @@ jobs:
           path: allure-report
 
   pages:
+    # continue-on-error: GitHub Pages needs a paid plan for a PRIVATE repo (GitLab gives this free);
+    # on a repo without Pages enabled this job fails, and that must never turn the whole run red -
+    # the suite already ran and reported by the time this job starts.
     if: always() && github.event_name == 'push'
     needs: test
+    continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
       pages: write
