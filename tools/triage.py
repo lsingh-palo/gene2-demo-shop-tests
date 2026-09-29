@@ -203,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--parity")
     b.add_argument("--reports", help="the reports folder with screenshots/ and traces/ (default: next to the junit file)")
     b.add_argument("--out", help="default: the run's docs/ folder (sibling of the junit file's folder)")
+    b.add_argument("--run", help="the run id (default: the name of the junit file's run folder)")
     s = sub.add_parser("set")
     s.add_argument("--file", required=True)
     s.add_argument("--test", required=True)
@@ -222,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
         t = build(a.slug, junit, root, pathlib.Path(a.parity) if a.parity else None,
                   pathlib.Path(a.reports) if a.reports else None)
         out = pathlib.Path(a.out) if a.out else junit.resolve().parents[1] / "docs"
+        if a.run:
+            t["run"] = a.run
         write(t, out)
         n = len(t["rows"])
         print(f"{n} failure(s) triaged -> {out / 'triage.md'}")

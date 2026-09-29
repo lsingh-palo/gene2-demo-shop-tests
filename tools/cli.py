@@ -10,7 +10,7 @@
     ./gene2 ci <level> [v2]              the same level in GitHub Actions: start, wait, fetch the report
     ./gene2 triage [run id]              evidence and a proposed class for every failure of a run
     ./gene2 accept [run id]              confirm every proposed product/known-bug row (after you agreed)
-    ./gene2 bugs [run id]                file the confirmed bugs in Jira now, attach them in QMetry, refresh
+    ./gene2 bugs [run id] [--dry-run]    file the confirmed bugs in Jira now, attach them in QMetry, refresh
     ./gene2 report [run id] | status     one run's report | the table of every run
     ./gene2 allure [ci]                  open the Allure report in the browser (last local run | live CI)
     ./gene2 open ci|repo|actions         open the CI run / the repo / the Actions page
@@ -184,7 +184,7 @@ def c_triage(args):
     run_id = args[0] if args else latest_run()
     d = run_dir(run_id)
     reports = SUITE / "reports" if run_id.startswith("local-") else d
-    tool("triage.py", "build", "--slug", SLUG, "--junit", d / "junit.xml", "--reports", reports, "--out", d)
+    tool("triage.py", "build", "--slug", SLUG, "--junit", d / "junit.xml", "--reports", reports, "--out", d, "--run", run_id)
     tool("triage.py", "show", "--file", d / "triage.json")
     print(f"\nnext: after you agree with the proposed classes, ./gene2 accept {run_id}; then ./gene2 bugs {run_id}")
     return 0
@@ -206,12 +206,17 @@ def c_accept(args):
 
 
 def c_bugs(args):
-    run_id = args[0] if args else latest_run()
+    run_id = next((a for a in args if not a.startswith("--")), None) or latest_run()
     d = run_dir(run_id)
     t = d / "triage.json"
     if not t.exists():
         sys.exit(f"triage this run first: ./gene2 triage {run_id}")
-    tool("jira_bug.py", "--slug", SLUG, "--from-triage", t, "--app-url", app_url())
+    dry = "--dry-run" in args
+    variant = "v2" if "-v2-" in run_id or run_id.endswith("-v2") else "v1"
+    tool("jira_bug.py", "--slug", SLUG, "--from-triage", t, "--app-url", app_url(), "--variant", variant,
+         *(["--dry-run"] if dry else []))
+    if dry:
+        return 0
     if secret("QMETRY_API_KEY"):  # same run id: finds its cycle and only attaches the new bugs
         tool("qmetry_sync.py", "results", "--slug", SLUG, "--junit", d / "junit.xml", "--run", run_id,
              "--apply", "--confirm-host", qmetry_host())

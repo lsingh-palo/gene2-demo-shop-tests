@@ -128,6 +128,11 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
     new_tests = sorted(set(j["tests"]) - set((previous or {}).get("tests", []))) if previous else []
 
     remote = web_remote(git(root, "remote", "get-url", "origin"))
+    branch, commit = git(root, "rev-parse", "--abbrev-ref", "HEAD"), git(root, "rev-parse", "--short", "HEAD")
+    if os.environ.get("GITHUB_REPOSITORY"):  # in a CI container git may not read the checkout: ask the runner
+        remote = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
+        branch = os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME") or branch
+        commit = (os.environ.get("GITHUB_SHA") or commit)[:7]
     totals = {k: sum(1 for t in j["tests"].values() if t["outcome"] == k) for k in ("passed", "failed", "skipped")}
     unexpected = [r for r in rows if not r["known_bug"]]
     return {
@@ -142,8 +147,8 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
         "qmetry": {k: qrun.get(k) for k in ("cycle_key", "cycle_summary", "env", "version", "host", "applied",
                                               "cycle_created", "defects")} if qrun else {},
         "links": {"ci_run": ci_url, "allure_live": report_url, "remote_repo": remote,
-                  "branch": git(root, "rev-parse", "--abbrev-ref", "HEAD"), "commit": git(root, "rev-parse", "--short", "HEAD"),
-                  "local_repo": str(root), "jira_base": jira_base.rstrip("/"),
+                  "branch": branch, "commit": commit,
+                  "local_repo": "" if (where == "ci" or ci_url) else str(root), "jira_base": jira_base.rstrip("/"),
                   "allure_local": allure_cmd or f"allure serve {allure_results or suite / 'reports' / 'allure-results'}",
                   "jira_project_bugs": (f"{jira_base.rstrip('/')}/issues/?jql=labels%20%3D%20%22gene2-suite-{slug}%22"
                                         if jira_base else "")},
@@ -198,7 +203,8 @@ def render(r: dict) -> str:
         out.append(f"| Jira bugs linked to failures | {', '.join(bug(k) for k in r['bugs'])} |")
     if L.get("jira_project_bugs"):
         out.append(f"| Every bug this suite's runs filed | {L['jira_project_bugs']} |")
-    out.append(f"| Local repo | `{L['local_repo']}` |")
+    if L.get("local_repo"):
+        out.append(f"| Local repo | `{L['local_repo']}` |")
     if L["remote_repo"]:
         out.append(f"| Remote repo | {L['remote_repo']} (branch `{L['branch']}`, commit `{L['commit']}`) |")
     out.append("")
