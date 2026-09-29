@@ -15,9 +15,10 @@ What is found, never by key number or range, only by label and marker:
   jira    issues labelled `gene2-live` AND `gene2-suite-<slug>` (the bugs runs filed), and comments
           whose first line is a run marker `[gene2-live <slug> run ...]` or the story status marker
           `[gene2-live <slug> story-status]` (on any issue: a duplicate bug, a story). With
-          --reset-bugs, also every bug in the suite's ledger, by its fingerprint label
-          `gene2:<slug>:<bugkey>` (a bug filed before the gene2-live label existed has only that),
-          so a demo starts with no bug at all and every bug shown is filed during it.
+          --reset-bugs, also every bug in the suite's ledger that a run filed: fingerprint label
+          `gene2:<slug>:<bugkey>` AND jira_bug.py's title "[<slug>] <module>: <title>" (a bug filed
+          before the gene2-live label existed has only those). A seeded bug that carries a
+          fingerprint on purpose keeps its own title, so it is never taken.
           Ledger entries of deleted issues are removed from bugs.json.
   qmetry  test cases labelled `gene2-live` and `<slug>`; test cycles named `gene2 <slug> ...`, and with
           them their executions (an execution only exists inside its cycle).
@@ -93,11 +94,13 @@ def jira_plan(client, project: str, slug: str, protect: list[str], extra_keys: l
               fingerprints: list[str] = ()) -> dict:
     issues = client.search(f'project = "{project}" AND labels = "{LIVE}" AND labels = "{suite_label(slug)}"',
                            fields="summary,labels")
-    if fingerprints:  # --reset-bugs: the bugs this suite filed, found by their fingerprint label
+    if fingerprints:  # --reset-bugs: the bugs runs filed, by fingerprint AND jira_bug.py's title format
         seen = {i["key"] for i in issues}
         fp = ", ".join(f'"{f}"' for f in fingerprints)
+        # a seeded bug may carry a fingerprint too (so a run comments on it instead of duplicating it),
+        # but only jira_bug.py titles a bug "[<slug>] <module>: <title>": that is what a run filed
         issues += [i for i in client.search(f'project = "{project}" AND labels in ({fp})', fields="summary,labels")
-                   if i["key"] not in seen]
+                   if i["key"] not in seen and ((i.get("fields") or {}).get("summary") or "").startswith(f"[{slug}] ")]
     delete, protected = [], []
     for i in issues:
         (protected if set(_labels(i)) & set(protect) else delete).append(i)
@@ -271,8 +274,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--protect", action="append", default=[], help="never delete an issue with this label")
     ap.add_argument("--reset-bugs", action="store_true",
-                    help="with --jira: also delete every bug in the suite's ledger (found by its fingerprint label, "
-                         "even one filed before the gene2-live label existed) and clear those ledger entries")
+                    help="with --jira: also delete the bugs runs filed that are in the suite's ledger (fingerprint "
+                         "label + jira_bug.py's title format; seeded bugs are never taken) and clear those ledger entries")
     a = ap.parse_args(argv)
     root = pathlib.Path.cwd()
     jira = qmetry = None

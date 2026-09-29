@@ -280,7 +280,7 @@ class Sync:
 
     def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str],
                 bugs_by_test: dict[str, str] | None = None, env: str = "test",
-                version: str | None = None) -> str:
+                version: str | None = None, ci_url: str = "") -> str:
         """One cycle per run; link every case with a result under a QMetry Environment and Build
         (find-or-created by name; version defaults to one past the highest Build already in the
         project - read from QMetry itself via pick_next_build_version, not a local file, so it is
@@ -325,13 +325,14 @@ class Sync:
             self.act("create", f"test cycle {summary!r} with {len(with_result)} cases (env {env}, version {version})")
             live_label = self._label_ids([LIVE])
             cyc = (self.c.create_cycle({"projectId": self.pid, "summary": summary, "labels": [i for i in live_label if i is not None],
-                                        "description": f"Gen-e2 automated run {run_id}\nEnvironment: {env}\nVersion: {version}"})
+                                        "description": f"Gen-e2 automated run {run_id}\nEnvironment: {env}\nVersion: {version}"
+                                                       + (f"\nCI run: {ci_url}" if ci_url else "")})
                    if self.apply else {"id": None})
             if self.apply and not cyc.get("key"):  # the create response may carry only the id
                 cyc = next((c for c in self.c.search_cycles(self.pid, summary) if c.get("summary") == summary), cyc)
         self.run_info = {"run_id": run_id, "cycle_key": cyc.get("key"), "cycle_id": cyc.get("id"),
                          "cycle_summary": summary, "cycle_created": not cycles, "env": env,
-                         "version": version, "defects": {}}
+                         "version": version, "ci_run": ci_url, "defects": {}}
         linked = {x.get("summary"): x for x in (self.c.cycle_cases(cyc["id"]) if self.c and cyc.get("id") else [])}
         missing = [c for c in with_result if c["summary"] not in linked]
         if missing:
@@ -451,14 +452,24 @@ def find_allure_results(slug: str, junit: str | None, root: pathlib.Path) -> pat
     return next((c for c in candidates if c.exists()), candidates[0])
 
 
-def write_allure_environment(results_dir: pathlib.Path, env: str, version: str, run_id: str) -> None:
+def ci_run_url() -> str:
+    """The web page of the CI run this process belongs to, when it runs in CI (else "")."""
+    import os
+    if os.environ.get("GITHUB_RUN_ID") and os.environ.get("GITHUB_REPOSITORY"):
+        return (f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ['GITHUB_REPOSITORY']}"
+                f"/actions/runs/{os.environ['GITHUB_RUN_ID']}")
+    return os.environ.get("CI_PIPELINE_URL") or os.environ.get("CI_JOB_URL") or ""
+
+
+def write_allure_environment(results_dir: pathlib.Path, env: str, version: str, run_id: str,
+                             cycle_key: str = "", ci_url: str = "") -> None:
     """Allure shows a properties file at the root of allure-results as an "Environment" panel on
     the report - this is the one place Allure natively supports this, so nothing custom needed on
-    the report-generation side."""
+    the report-generation side. Keys have no spaces (a space ends a properties key)."""
     if not results_dir.exists():
         return
-    (results_dir / "environment.properties").write_text(
-        f"Environment={env}\nVersion={version}\nRun={run_id}\n")
+    rows = [("Environment", env), ("Version", version), ("Run", run_id), ("QMetryCycle", cycle_key), ("CIRun", ci_url)]
+    (results_dir / "environment.properties").write_text("".join(f"{k}={v}\n" for k, v in rows if v))
 
 
 def bugs_by_test(slug: str, root: pathlib.Path) -> dict[str, str]:
@@ -515,8 +526,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "cases":
         s.cases(cases)
     else:
-        version = s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version)
-        write_allure_environment(find_allure_results(a.slug, a.junit, root), a.env, version, run_id)
+        version = s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version, ci_run_url())
+        write_allure_environment(find_allure_results(a.slug, a.junit, root), a.env, version, run_id,
+                                 s.run_info.get("cycle_key") or "", ci_run_url())
     if a.apply and s.tc_keys:
         out = root / "consolidated" / a.slug / "qmetry-cases.json"
         out.write_text(json.dumps(dict(sorted(s.tc_keys.items())), indent=2) + "\n")

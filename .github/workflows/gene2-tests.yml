@@ -15,7 +15,8 @@
 #
 # Levels: pull_request -> smoke, schedule -> extended, push -> functional, "Run workflow" (or
 # `gene2 ci trigger --level X`) -> smoke | functional | extended | exploratory | full (every test but quarantined).
-# A manual run can also override GENE2_APP_START (for example to test another version of the app).
+# A manual run can also override GENE2_APP_START (for example to test another version of the app)
+# and name the version under test (the same value then shows in QMetry, Allure and the PDF).
 #
 # Known bugs: @pytest.mark.bug tests are strict expected failures in ci mode. The job is green when
 # only known bugs fail, and red when a known bug is fixed (flip that test) or anything else fails.
@@ -50,6 +51,14 @@ on:
         description: "Optional: command that starts the app under test (overrides GENE2_APP_START)"
         type: string
         default: ""
+      version:
+        description: "Optional: the version under test (QMetry Build, Allure and PDF); empty = next automatic"
+        type: string
+        default: ""
+      env:
+        description: "QMetry Environment"
+        type: string
+        default: "test"
 
 concurrency:
   group: gene2-${{ github.ref }}
@@ -118,8 +127,10 @@ jobs:
         run: |
           TOOLS="${GENE2_TOOLS:-tools}"
           HOST=$(python -c "import urllib.parse,os;print(urllib.parse.urlparse(os.environ['QMETRY_BASE_URL']).hostname)")
+          VERSION="${{ inputs.version }}"
           python "$TOOLS/qmetry_sync.py" results --slug "$GENE2_TARGET_SLUG" --junit report.xml \
-            --run "${{ steps.level.outputs.run_id }}" --apply --confirm-host "$HOST"
+            --run "${{ steps.level.outputs.run_id }}" --env "${{ inputs.env || 'test' }}" ${VERSION:+--version "$VERSION"} \
+            --apply --confirm-host "$HOST"
 
       - name: Story status (one comment per Jira story with its tests and this run's results)
         if: always() && env.ATLASSIAN_API_TOKEN != '' && github.event_name != 'pull_request'

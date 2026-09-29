@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Drive the GitHub Actions pipeline from the terminal: start a level, wait for it, read it back.
 
-    gene2 ci trigger --level smoke [--app-start "<command>"] [--ref <branch>] [--wait]
+    gene2 ci trigger --level smoke [--version 2.3.7] [--env test] [--app-start "<command>"] [--ref <branch>] [--wait]
     gene2 ci wait    [--run <id>] [--timeout 1500]      # default: the newest run of this branch
     gene2 ci runs    [--n 5]                            # the last runs with level, event and result
     gene2 ci fetch   [--run <id>] [--out-dir <dir> | --runs-dir <dir>]   # the run's report, junit, QMetry record
@@ -107,6 +107,10 @@ def cmd_trigger(a, root) -> int:
     inputs = {"level": a.level}
     if a.app_start:
         inputs["app_start"] = a.app_start
+    if a.version:
+        inputs["version"] = a.version
+    if a.env:
+        inputs["env"] = a.env
     t0 = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=10)
     call("POST", f"/repos/{full}/actions/workflows/{WORKFLOW}/dispatches", {"ref": ref, "inputs": inputs}, auth=True)
     print(f"started: {a.level} on {ref} ({', '.join(f'{k}={v}' for k, v in inputs.items())})")
@@ -202,6 +206,8 @@ def main(argv: list[str] | None = None) -> int:
     t = sub.add_parser("trigger")
     t.add_argument("--level", required=True, choices=["smoke", "functional", "extended", "exploratory", "full"])
     t.add_argument("--app-start", default="", help="override GENE2_APP_START for this run (e.g. another app version)")
+    t.add_argument("--version", default="", help="the version under test (default: the next automatic one)")
+    t.add_argument("--env", default="", help="QMetry Environment (default: test)")
     t.add_argument("--ref")
     t.add_argument("--wait", action="store_true")
     t.add_argument("--timeout", type=int, default=1500)

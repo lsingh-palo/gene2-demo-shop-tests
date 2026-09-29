@@ -5,9 +5,13 @@
     ./gene2 clean [--apply]              what runs created in Jira + QMetry, and local leftovers; --apply
                                          deletes it after YOU type the Jira host (so no script or AI can)
     ./gene2 clean local                  local run leftovers only (no host to type)
-    ./gene2 run <level> [v2] [headed]    run here: smoke | functional | extended | exploratory | full, on v1 (or v2);
-                                         then QMetry sync (env test, next version) and the run report
-    ./gene2 ci <level> [v2]              the same level in GitHub Actions: start, wait, fetch the report
+    ./gene2 run <level> [v2] [headed] [--version 2.3.7] [--env test]
+                                         run here: smoke | functional | extended | exploratory | full, on v1
+                                         (or v2); then QMetry sync (env test, the version given or the next
+                                         automatic one) and the run report
+    ./gene2 ci <level> [v2] [--version 2.3.7] [--env test]
+                                         the same level in GitHub Actions: start, wait, fetch the report;
+                                         the version shows in the run page, Allure, the PDF and QMetry
     ./gene2 triage [run id]              evidence and a proposed class for every failure of a run
     ./gene2 accept [run id]              confirm every proposed product/known-bug row (after you agreed)
     ./gene2 bugs [run id] [--dry-run]    file the confirmed bugs in Jira now, attach them in QMetry, refresh
@@ -50,6 +54,11 @@ LEVELS = ("smoke", "functional", "extended", "exploratory", "full")
 def sh(*args, check=False, env=None, cwd=ROOT) -> int:
     print("$ " + " ".join(str(a) for a in args), flush=True)
     return subprocess.run([str(a) for a in args], cwd=cwd, env={**os.environ, **(env or {})}, check=check).returncode
+
+
+def opt(args: list[str], name: str) -> list[str]:
+    """--version 2.3.7 / --env staging passed through to the QMetry sync or the CI run."""
+    return [name, args[args.index(name) + 1]] if name in args and args.index(name) + 1 < len(args) else []
 
 
 def tool(script: str, *args, check=False) -> int:
@@ -160,7 +169,7 @@ def c_run(args):
     shutil.copy(SUITE / "reports" / "junit.xml", d / "junit.xml")
     if secret("QMETRY_API_KEY"):
         tool("qmetry_sync.py", "results", "--slug", SLUG, "--junit", d / "junit.xml", "--run", run_id,
-             "--apply", "--confirm-host", qmetry_host())
+             *opt(args, "--version"), *opt(args, "--env"), "--apply", "--confirm-host", qmetry_host())
     else:
         print("QMetry sync skipped: no QMETRY_API_KEY")
     report(run_id)
@@ -175,7 +184,7 @@ def c_ci(args):
     if "v2" in args:
         port = urllib.parse.urlparse(app_url()).port or 80
         extra = ["--app-start", f"python3 demo-app/serve.py --variant v2 --port {port}"]
-    rc = tool("ci.py", "trigger", "--level", level, "--wait", *extra)
+    rc = tool("ci.py", "trigger", "--level", level, "--wait", *extra, *opt(args, "--version"), *opt(args, "--env"))
     RUNS.mkdir(parents=True, exist_ok=True)
     tool("ci.py", "fetch", "--runs-dir", RUNS)
     print("\nnext: ./gene2 allure ci (opens the live report)" + ("; ./gene2 triage (there are failures)" if rc else ""))

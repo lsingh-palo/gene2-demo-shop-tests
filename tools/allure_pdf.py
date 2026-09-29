@@ -128,8 +128,23 @@ def summarise(results: list[dict], suite: dict, jira_base: str = "") -> dict:
     return {"tests": tests}
 
 
-def environment(tests: list[dict], app_url: str, variant: str) -> list[tuple[str, str]]:
-    ci = next((f"{k}={os.environ[k]}" for k in ("GITHUB_RUN_ID", "CI_PIPELINE_ID", "BUILD_ID") if os.environ.get(k)), "local")
+def run_properties(results: pathlib.Path | None) -> dict[str, str]:
+    """allure-results/environment.properties (written by qmetry_sync.py: Environment, Version, Run,
+    QMetryCycle, CIRun), so the PDF names the same version, run and QMetry cycle as Allure."""
+    out = {}
+    p = (results / "environment.properties") if results else None
+    if p and p.exists():
+        for line in p.read_text(encoding="utf-8").splitlines():
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1)
+                out[k.strip()] = v.strip()
+    return out
+
+
+def environment(tests: list[dict], app_url: str, variant: str, results: pathlib.Path | None = None) -> list[tuple[str, str]]:
+    props = run_properties(results)
+    ci = props.get("CIRun") or next((f"{k}={os.environ[k]}" for k in ("GITHUB_RUN_ID", "CI_PIPELINE_ID", "BUILD_ID")
+                                     if os.environ.get(k)), "local")
     browsers = sorted({t["browser"] for t in tests if t["browser"]}) or \
         [b for b in os.environ.get("GENE2_BROWSERS", "").split() if b] or ["(not recorded)"]
     start = min((t["start"] for t in tests if t["start"]), default=0)
@@ -140,6 +155,8 @@ def environment(tests: list[dict], app_url: str, variant: str) -> list[tuple[str
             ("Browsers", ", ".join(browsers)),
             ("Run", f"{fmt(start)} to {fmt(stop)}" if start else "(no timing)"),
             ("CI run", ci),
+            *[(label, props[k]) for k, label in (("Run", "Run id"), ("Environment", "Environment"),
+                                                  ("Version", "Version"), ("QMetryCycle", "QMetry cycle")) if props.get(k)],
             ("Commit / branch", f"{_git('rev-parse', '--short', 'HEAD') or '?'} / {_git('rev-parse', '--abbrev-ref', 'HEAD') or '?'}"),
             ("Harness", f"Gen-e2 {harness_version()}"),
             ("Report generated", datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))]
@@ -246,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     suite = load_suite(root, a.slug)
     jira_base = os.environ.get("ATLASSIAN_BASE_URL", "").rstrip("/")
     s = summarise(rs, suite, jira_base)
-    page = render_html(a.slug, s, environment(s["tests"], a.app_url, a.variant), suite["scorecard"], results)
+    page = render_html(a.slug, s, environment(s["tests"], a.app_url, a.variant, results), suite["scorecard"], results)
     out.parent.mkdir(parents=True, exist_ok=True)
     html_path = out.with_suffix(".html")
     html_path.write_text(page, encoding="utf-8")
