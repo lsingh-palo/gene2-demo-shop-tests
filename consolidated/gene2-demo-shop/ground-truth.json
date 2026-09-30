@@ -35,7 +35,8 @@
  },
  "shared_bugs": {
   "DB-04": [
-   "test_postcode_is_required"
+   "test_postcode_is_required",
+   "test_postcode_must_be_six_digits"
   ],
   "DB-05": [
    "test_double_submit_records_one_order"

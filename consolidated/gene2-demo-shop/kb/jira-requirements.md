@@ -1,15 +1,15 @@
 ---
-source: jira 23 issue(s)
+source: jira 32 issue(s)
 title: Jira requirements digest
-last_verified: 2026-09-24
-review_by: 2026-12-23
+last_verified: 2026-09-30
+review_by: 2026-12-29
 parse_warnings: 0
 note: current-state only. Struck-through / superseded text removed. Verify against the source before relying on any rule.
 ---
 
 
 ## SHOP-7 - Log in with a customer account and refuse locked accounts  (Done)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-7>  updated 2026-09-24T01:51:03.737+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-7>  updated 2026-09-30T10:14:54.291+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to log in with my username and password, so that I can shop with my own cart and order history.
@@ -20,6 +20,13 @@ Acceptance criteria
 Notes
 Demo accounts: standard_user (customer), locked_user (locked), admin_user (admin).
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:11.953+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-7 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC003 a locked account is refused with the lockout message: passed (QMetry SHOP-TC-9)
+- TC005 a locked account cannot reach the catalog: passed (QMetry SHOP-TC-18)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-8 - Redirect to login when there is no session  (Done)
 <${ATLASSIAN_BASE_URL}/browse/SHOP-8>  updated 2026-09-24T01:51:04.455+0800
@@ -32,7 +39,7 @@ Acceptance criteria
 
 
 ## SHOP-9 - Restrict the admin page to admins  (Done)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-9>  updated 2026-09-24T01:51:05.161+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-9>  updated 2026-09-30T10:14:55.220+0800
 
 Description (may be stale - the comment thread wins):
 > As the shop owner, I want only admins to use the admin page, so that customers cannot change stock or promotions.
@@ -41,9 +48,15 @@ Acceptance criteria
 - Given a customer, when they open admin.html directly, then they see "Admins only." and no controls.
 - Given a customer, then the Admin link is not shown in the header.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:12.861+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-9 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 1 test(s), 1 passed, 0 failed.
+- TC006 a customer cannot use the admin page: passed (QMetry SHOP-TC-21)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-10 - Search products by name  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-10>  updated 2026-09-24T01:51:14.704+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-10>  updated 2026-09-30T10:14:40.098+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to search products by name, so that I can find an item without paging through the whole range.
@@ -52,9 +65,16 @@ Acceptance criteria
 - The match ignores case: "lamp", "LAMP" and "Lamp" all find Desk Lamp.
 - Given a search with no matches (for example "zebra"), then I see "No products match." and no pager.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:48:56.309+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-10 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC040 search matches product names regardless of case: passed (QMetry SHOP-TC-34)
+- TC041 a search with no matches shows the empty message: passed (QMetry SHOP-TC-35)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-11 - Filter products by category and stock  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-11>  updated 2026-09-24T01:51:16.053+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-11>  updated 2026-09-30T10:14:41.204+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to filter by category and hide items that are out of stock, so that I only see what I can buy.
@@ -64,9 +84,15 @@ Acceptance criteria
 - Filters and search combine: every condition must hold (AND).
 - Kitchen with In stock only returns exactly 8 products on one page.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:48:57.499+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-11 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 1 test(s), 1 passed, 0 failed.
+- TC042 kitchen with in stock only lists exactly eight products on one page: passed (QMetry SHOP-TC-33)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-12 - Page through All products  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-12>  updated 2026-09-24T01:51:17.593+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-12>  updated 2026-09-30T10:14:42.663+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want the full range split into pages of 8, so that the page stays quick to scan.
@@ -76,9 +102,15 @@ Acceptance criteria
 - Paging through every page shows every matching product exactly once.
 - There is no Next button on the last page and no Previous button on the first.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:48:58.539+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-12 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 1 test(s), 1 passed, 0 failed.
+- TC043 every matching product appears exactly once across pages: passed (QMetry SHOP-TC-32)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-13 - Product detail page  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-13>  updated 2026-09-24T01:51:18.903+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-13>  updated 2026-09-30T10:14:43.696+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want a page per product with its price, stock, description and reviews, so that I can decide before adding it to my cart.
@@ -88,9 +120,15 @@ Acceptance criteria
 - A product without reviews shows "No reviews yet".
 - A quantity of 1-5 can be chosen before Add to cart.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:48:59.659+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-13 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 1 test(s), 1 passed, 0 failed.
+- TC050 the average rating is shown to one decimal: passed (QMetry SHOP-TC-23)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-14 - Write a product review  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-14>  updated 2026-09-24T01:51:19.563+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-14>  updated 2026-09-30T10:14:44.699+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to rate and review a product, so that other customers can learn from my experience.
@@ -100,18 +138,31 @@ Acceptance criteria
 - A rejected review is not saved.
 - A saved review appears in the list at once and the average rating updates.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:00.784+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-14 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC060 a review without a rating is rejected: passed (QMetry SHOP-TC-31)
+- TC061 review text must be 10 to 500 characters: passed (QMetry SHOP-TC-30)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-15 - Allow one review per customer per product  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-15>  updated 2026-09-24T01:51:20.246+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-15>  updated 2026-09-30T10:14:45.616+0800
 
 Description (may be stale - the comment thread wins):
 > As the shop owner, I want each customer to review a product only once, so that ratings cannot be inflated.
 Acceptance criteria
 - Given I already reviewed a product, when I submit another review for it, then I see "You have already reviewed this product." and nothing is saved.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:01.806+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-15 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 1 test(s), 1 passed, 0 failed.
+- TC062 a customer can review a product only once: passed (QMetry SHOP-TC-29)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-16 - Change quantities in the cart  (Done)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-16>  updated 2026-09-24T01:51:05.860+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-16>  updated 2026-09-30T10:14:46.616+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to change the quantity of each cart line, so that I can buy more than one of an item.
@@ -121,9 +172,18 @@ Acceptance criteria
 - The cart badge shows the total number of items (the sum of quantities) and updates immediately.
 - The badge is hidden whenever the cart is empty.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:02.926+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-16 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 4 test(s), 4 passed, 0 failed.
+- TC020 adding items increments the badge: passed (QMetry SHOP-TC-3)
+- TC021 removing an item decrements the badge: passed (QMetry SHOP-TC-1)
+- TC022 the badge is hidden when the cart is empty: passed (QMetry SHOP-TC-2)
+- TC023 the badge counts quantities: passed (QMetry SHOP-TC-19)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-17 - Block out-of-stock products from the cart  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-17>  updated 2026-09-24T01:51:21.671+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-17>  updated 2026-09-30T10:14:47.554+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to know when an item is sold out or nearly gone, so that I do not order something the shop cannot send.
@@ -132,9 +192,16 @@ Acceptance criteria
 - A product with 1 to 3 left shows "Only N left".
 - When an admin sets a product's stock to 0, the catalogue reflects it at once.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:04.381+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-17 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC070 an out-of-stock product cannot be added to the cart: passed (QMetry SHOP-TC-41)
+- TC072 a product with 1 to 3 left shows only n left: passed (QMetry SHOP-TC-40)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-18 - Apply promo codes at checkout  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-18>  updated 2026-09-24T01:51:23.087+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-18>  updated 2026-09-30T10:14:48.580+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to enter a promo code at checkout, so that I get the advertised discount.
@@ -147,9 +214,15 @@ Acceptance criteria
 
 Comment thread (oldest first, newest wins):
 - 2026-09-24T01:50:36.078+0800 Lalit Singh: Marketing confirmed the launch codes. Discount rules and thresholds are owned by the Business rules page in Confluence (SHOP space); please check it before writing tests.
+- 2026-09-29T09:49:05.391+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-18 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC082 welcome5 needs a subtotal of 30 dollars: passed (QMetry SHOP-TC-28)
+- TC083 an unknown code is not valid: passed (QMetry SHOP-TC-27)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-19 - Allow only one discount code per order  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-19>  updated 2026-09-24T01:51:24.607+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-19>  updated 2026-09-30T10:14:49.542+0800
 
 Description (may be stale - the comment thread wins):
 > As Finance, I want customers to use at most one discount code per order, so that margins stay predictable.
@@ -159,9 +232,15 @@ Acceptance criteria
 
 Comment thread (oldest first, newest wins):
 - 2026-09-24T01:50:37.140+0800 Lalit Singh: Rule changed after the pricing review: stacking two discount codes is no longer allowed. The old rule is struck through on the Business rules page and must not be implemented.
+- 2026-09-29T09:49:06.425+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-19 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC080 only one discount code applies per order: passed (QMetry SHOP-TC-26)
+- TC081 freeship combines with a discount code: passed (QMetry SHOP-TC-25)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-20 - Charge tax on the discounted subtotal  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-20>  updated 2026-09-24T01:51:29.599+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-20>  updated 2026-09-30T10:14:50.580+0800
 
 Description (may be stale - the comment thread wins):
 > As Finance, I want tax charged on what the customer actually pays for goods, so that we do not over-collect tax on discounted orders.
@@ -173,9 +252,16 @@ Acceptance criteria
 
 Comment thread (oldest first, newest wins):
 - 2026-09-24T01:50:38.652+0800 Lalit Singh: Finance sign-off: 8% on the discounted subtotal, rounding half up to the cent. No tax on shipping.
+- 2026-09-29T09:49:07.912+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-20 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 3 test(s), 3 passed, 0 failed.
+- TC030 tax is 8% of the subtotal: passed (QMetry SHOP-TC-7)
+- TC034 tax is rounded to the nearest cent: passed (QMetry SHOP-TC-17)
+- TC037 tax is charged on the discounted subtotal: passed (QMetry SHOP-TC-20)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-21 - Choose a delivery region at checkout  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-21>  updated 2026-09-24T01:51:31.464+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-21>  updated 2026-09-30T10:14:51.482+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer outside the metro area, I want to choose my delivery region, so that I pay the right shipping for where I live.
@@ -185,9 +271,19 @@ Acceptance criteria
 - Remote: always $14.00; FREESHIP does not apply.
 - Full name is 2-60 characters and the address line is required.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:08.996+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-21 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 5 test(s), 5 passed, 0 failed.
+- TC035 orders over $75 ship free: passed (QMetry SHOP-TC-16)
+- TC036 orders of $75 or less pay flat shipping: passed (QMetry SHOP-TC-15)
+- TC090 the regional surcharge is added to shipping: passed (QMetry SHOP-TC-37)
+- TC091 remote shipping is always 14 dollars: passed (QMetry SHOP-TC-38)
+- TC092 the free shipping threshold is measured after discounts: passed (QMetry SHOP-TC-36)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-22 - See my order history  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-22>  updated 2026-09-24T01:51:32.156+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-22>  updated 2026-09-30T10:14:52.445+0800
 
 Description (may be stale - the comment thread wins):
 > As a customer, I want to see my past orders, so that I can check what I bought and what I paid.
@@ -196,9 +292,16 @@ Acceptance criteria
 - I only see my own orders.
 - Submitting checkout more than once records one order.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:10.010+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-22 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 1 passed, 0 failed, 1 not in this run.
+- TC033 double-submitting checkout records one order: not in this run (QMetry SHOP-TC-5)
+- TC100 order history lists the customer's orders newest first: passed (QMetry SHOP-TC-22)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-23 - Manage stock and promo codes as admin  (In Progress)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-23>  updated 2026-09-24T01:51:32.828+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-23>  updated 2026-09-30T10:14:53.335+0800
 
 Description (may be stale - the comment thread wins):
 > As the shop admin, I want to set stock levels and switch promo codes on and off, so that I can react to sell-outs and campaigns without a deployment.
@@ -207,9 +310,16 @@ Acceptance criteria
 - A stock change shows in the catalogue at once.
 - A disabled promo code behaves exactly like an unknown code.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-29T09:49:11.046+0800 Lalit Singh: [gene2-live gene2-demo-shop story-status]
+Gen-e2 automated tests for SHOP-23 (suite gene2-demo-shop). This comment is updated in place by each run.
+Latest run gh-36658825518-functional on http://127.0.0.1:8801: 2 test(s), 2 passed, 0 failed.
+- TC071 stock set to zero by the admin blocks adding in the catalogue: passed (QMetry SHOP-TC-39)
+- TC084 a code disabled by the admin is not valid: passed (QMetry SHOP-TC-24)
+QMetry cycle: gene2 gene2-demo-shop gh-36658825518-functional
 
 ## SHOP-37 - Checkout accepts an order without a postcode  (To Do)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-37>  updated 2026-09-24T01:50:58.386+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-37>  updated 2026-09-24T02:47:24.058+0800
 
 Description (may be stale - the comment thread wins):
 > Severity: Medium   Environment: Production (v1.0)
@@ -224,9 +334,11 @@ The order is refused with an error asking for a 6-digit postcode.
 Actual
 The order is placed and the confirmation page is shown.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-24T02:47:24.058+0800 Lalit Singh: Gen-e2: this bug reproduced again on the latest run (Medium). Still failing. No duplicate created.
 
 ## SHOP-38 - Double-clicking Place order records two orders  (To Do)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-38>  updated 2026-09-24T01:50:58.876+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-38>  updated 2026-09-29T17:23:02.040+0800
 
 Description (may be stale - the comment thread wins):
 > Severity: High   Environment: Production (v1.0)
@@ -241,6 +353,8 @@ One order is recorded ("Orders on this account: 1").
 Actual
 Two orders are recorded ("Orders on this account: 2").
 
+Comment thread (oldest first, newest wins):
+- 2026-09-24T02:47:25.374+0800 Lalit Singh: Gen-e2: this bug reproduced again on the latest run (High). Still failing. No duplicate created.
 
 ## SHOP-39 - Cart badge shows an empty pill after the last item is removed  (Done)
 <${ATLASSIAN_BASE_URL}/browse/SHOP-39>  updated 2026-09-24T01:51:40.621+0800
@@ -275,7 +389,7 @@ Comment thread (oldest first, newest wins):
 - 2026-09-24T01:50:56.576+0800 Lalit Singh: Fixed and verified: tax now rounds to the nearest cent. Closing.
 
 ## SHOP-41 - Two discount codes can be applied to one order  (To Do)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-41>  updated 2026-09-24T01:51:00.401+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-41>  updated 2026-09-24T02:47:26.592+0800
 
 Description (may be stale - the comment thread wins):
 > Severity: High   Environment: Staging (v2.0 RC1)
@@ -289,9 +403,11 @@ WELCOME5 is refused with "Only one discount code can be used per order."; discou
 Actual
 Both codes are applied and the discount is $17.00.
 
+Comment thread (oldest first, newest wins):
+- 2026-09-24T02:47:26.592+0800 Lalit Singh: Gen-e2: this bug reproduced again on the latest run (High). Still failing. No duplicate created.
 
 ## SHOP-42 - Regional deliveries are charged the Metro shipping fee  (To Do)
-<${ATLASSIAN_BASE_URL}/browse/SHOP-42>  updated 2026-09-24T01:51:00.869+0800
+<${ATLASSIAN_BASE_URL}/browse/SHOP-42>  updated 2026-09-24T02:47:27.763+0800
 
 Description (may be stale - the comment thread wins):
 > Severity: Medium   Environment: Staging (v2.0 RC1)
@@ -304,4 +420,156 @@ Expected
 Shipping $11.50 ($6.50 + $5.00 Regional surcharge).
 Actual
 Shipping $6.50.
+
+Comment thread (oldest first, newest wins):
+- 2026-09-24T02:47:27.763+0800 Lalit Singh: Gen-e2: this bug reproduced again on the latest run (Medium). Still failing. No duplicate created.
+
+## SHOP-43 - [gene2-demo-shop] search: search matches product names regardless of case  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-43>  updated 2026-09-24T02:47:29.134+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: search   Severity: High
+Fingerprint: gene2:gene2-demo-shop:f5d6071b32
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. Open All products and search for "lamp".
+
+
+Expected: Desk Lamp is listed (case-insensitive search, REQ-SEARCH-01).
+Actual: v2: No products match. 'Lamp' finds it; 'lamp' and 'LAMP' do not.
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_search.py::test_search_ignores_case (fails until fixed).
+
+
+## SHOP-44 - [gene2-demo-shop] search: every matching product appears exactly once across pages  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-44>  updated 2026-09-24T02:47:30.826+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: search   Severity: Medium
+Fingerprint: gene2:gene2-demo-shop:1e18f5de3b
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. Open All products (no filters) and walk Next through pages 1 to 3, noting every product.
+
+
+Expected: 18 products across 3 pages, each exactly once (REQ-SEARCH-03).
+Actual: v2: 19 cards for 18 products; page 2 repeats the last product of page 1.
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_search.py::test_every_product_appears_once_across_pages (fails until fixed).
+
+
+## SHOP-45 - [gene2-demo-shop] stock: an out-of-stock product cannot be added to the cart  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-45>  updated 2026-09-24T02:47:32.274+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: stock   Severity: High
+Fingerprint: gene2:gene2-demo-shop:8957b8eb87
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. Open All products, search "Wall Clock" (0 in stock).
+3. Open its product page.
+
+
+Expected: The button is disabled and reads "Out of stock" on every list and on the product page (REQ-STOCK-01).
+Actual: v2: the button reads "Add to cart" and is enabled; the product can be added with 0 stock.
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_stock.py::test_out_of_stock_product_cannot_be_added (fails until fixed).
+
+
+## SHOP-46 - [gene2-demo-shop] catalog: sorting by price low to high is numeric  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-46>  updated 2026-09-24T03:03:56.219+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: catalog   Severity: Medium
+Fingerprint: gene2:gene2-demo-shop:135fb86528
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. On Featured, sort by Price (low to high).
+
+
+Expected: Prices in numeric order: $7.50, $9.99, $18.00, $24.00, $42.50, $120.00 (REQ-SORT).
+Actual: v2: sorted as text, so $120.00 comes before $18.00.
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_catalog.py::test_price_sort_is_numeric (fails until fixed).
+
+
+## SHOP-47 - [gene2-demo-shop] cart: removing an item decrements the badge  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-47>  updated 2026-09-24T03:03:57.967+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: cart   Severity: Medium
+Fingerprint: gene2:gene2-demo-shop:a32beacd8f
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. Add Desk Lamp and Wool Throw (badge 2).
+3. Remove Wool Throw.
+
+
+Expected: The badge shows 1 after the remove (REQ-CART).
+Actual: v2: the badge stays at 2; it also ignores a quantity lowered in the cart.
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_cart.py::test_badge_decrements_on_remove (fails until fixed).
+
+
+## SHOP-48 - [gene2-demo-shop] checkout: tax is 8% of the subtotal  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-48>  updated 2026-09-24T03:03:59.575+0800
+
+Description (may be stale - the comment thread wins):
+> Reported by Gen-e2 test harness.
+Target: gene2-demo-shop   Module: checkout   Severity: High
+Fingerprint: gene2:gene2-demo-shop:7422b6f65e
+
+Steps to reproduce:
+1. Log in as standard_user on the v2 release candidate.
+2. Add Desk Lamp ($42.50) and open Checkout.
+
+
+Expected: Tax $3.40 (8%, REQ-TAX).
+Actual: v2: tax $4.25 (10%, the struck rate).
+
+Reproduction test: consolidated/gene2-demo-shop/tests/test_checkout.py::test_tax_is_eight_percent_of_subtotal (fails until fixed).
+
+
+## SHOP-49 - Show every message in the agreed wording  (In Progress)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-49>  updated 2026-09-25T03:55:45.737+0800
+
+Description (may be stale - the comment thread wins):
+> As a customer, I want every error message to say exactly what went wrong in plain words, so that I can fix it without calling support.
+Acceptance criteria
+- Every message matches the wording in the Error message catalogue (Confluence), word for word.
+- A message appears next to the form that caused it, and the form keeps what I typed.
+- Only one message is shown at a time; checkout checks the full name first.
+
+
+## SHOP-50 - Place an order and pay on delivery  (In Progress)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-50>  updated 2026-09-25T03:55:47.149+0800
+
+Description (may be stale - the comment thread wins):
+> As a customer, I want to place my order without entering card details and pay when it arrives, so that checkout is quick.
+Acceptance criteria
+- The checkout has no payment step and asks for no card or bank details.
+- Placing an order shows "Thank you, your order is placed." with an order number like SO-1001.
+- After the order the cart is empty and the promo codes are cleared.
+Notes
+Card payments are planned for v3.0 (REQ-PAY-02) and are not part of this story.
+
+
+## SHOP-51 - Meet the accessibility baseline on every form  (To Do)
+<${ATLASSIAN_BASE_URL}/browse/SHOP-51>  updated 2026-09-25T03:55:44.270+0800
+
+Description (may be stale - the comment thread wins):
+> As a customer who uses a screen reader, I want every field to be announced by name, so that I can log in, check out and write a review without help.
+Acceptance criteria
+- Every form control on the login, checkout, review and admin forms has an accessible name.
+- Error messages are text, not colour alone.
 

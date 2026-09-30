@@ -108,3 +108,95 @@ def test_tax_on_discounted_subtotal(page: Page, base_url, credentials):
     expect(page.locator("[data-test='discount']")).to_have_text("-$5.00")
     expect(page.locator("[data-test='tax']")).to_have_text("$3.00")
     expect(page.locator("[data-test='total']")).to_have_text("$47.00")
+
+
+@pytest.mark.smoke
+def test_place_order_shows_confirmation_and_empties_cart(page: Page, base_url, credentials):
+    """TC038 [key:3efe638be7a0] [plan:P-047]
+    provenance: confirmed against REQ-CHK-02. Also REQ-CHK-01 (first order SO-1001), REQ-PAY-01 (no payment step)."""
+    auth_flow.login(page, base_url, credentials["standard"])
+    page.click("[data-test='add-p2']")
+    page.goto(f"{base_url}/checkout.html")
+    page.fill("[data-test='full-name']", "Ana Tan")
+    page.fill("[data-test='postcode']", "123456")
+    page.click("[data-test='place-order']")
+    expect(page).to_have_url(re.compile(r"/confirmation\.html$"))
+    expect(page.locator("[data-test='confirmation-title']")).to_have_text("Thank you, your order is placed.")
+    expect(page.locator("[data-test='order-number']")).to_have_text("SO-1001")
+    page.goto(f"{base_url}/cart.html")
+    badge = page.locator("[data-test='cart-badge']")
+    expect(badge).to_have_count(1)
+    expect(badge).to_be_hidden()
+    expect(page.locator("[data-test='cart-empty']")).to_be_visible()
+
+
+CHECKOUT_URL = re.compile(r"/checkout\.html$")
+
+
+def _cart_with_lamp(page: Page, base_url, creds):
+    auth_flow.login(page, base_url, creds)
+    page.goto(f"{base_url}/catalog.html")
+    page.click("[data-test='add-p2']")
+
+
+def _fresh_checkout(page: Page, base_url):
+    """checkout-error is never cleared on resubmit, so each case starts on a freshly loaded form."""
+    page.goto(f"{base_url}/checkout.html")
+    error = page.locator("[data-test='checkout-error']")
+    expect(error).to_be_hidden()
+    return error
+
+
+@pytest.mark.functional
+def test_admin_checkout_address_is_saved_address(page: Page, base_url, credentials):
+    """TC132 [key:a0d04d9bed00] [plan:P-053]
+    provenance: confirmed against REQ-ROLE-01."""
+    _cart_with_lamp(page, base_url, credentials["admin"])
+    page.goto(f"{base_url}/checkout.html")
+    expect(page.locator("[data-test='address']")).to_have_value("1 Depot Lane")
+
+
+@pytest.mark.functional
+def test_empty_address_is_rejected(page: Page, base_url, credentials):
+    """TC039 [key:52385492512f] [plan:P-051]
+    provenance: confirmed against REQ-ADDR-01 (ERR-15), REQ-MSG-03 (no order recorded)."""
+    _cart_with_lamp(page, base_url, credentials["standard"])
+    error = _fresh_checkout(page, base_url)
+    page.fill("[data-test='full-name']", "Ana Tan")
+    page.fill("[data-test='postcode']", "123456")
+    page.fill("[data-test='address']", "")
+    page.click("[data-test='place-order']")
+    expect(error).to_have_text("Address is required.")
+    expect(page).to_have_url(CHECKOUT_URL)
+    page.goto(f"{base_url}/orders.html")
+    expect(page.locator("[data-test='orders-empty']")).to_have_text("No orders yet.")
+
+
+@pytest.mark.functional
+def test_full_name_length_is_enforced(page: Page, base_url, credentials):
+    """TC031 [key:5191642001a8] [plan:P-050]
+    provenance: confirmed against REQ-ADDR-01 (ERR-13), REQ-MSG-01. 1 and 61 characters."""
+    _cart_with_lamp(page, base_url, credentials["standard"])
+    for name in ("A", "A" * 61):
+        error = _fresh_checkout(page, base_url)
+        page.fill("[data-test='full-name']", name)
+        page.fill("[data-test='postcode']", "123456")
+        page.click("[data-test='place-order']")
+        expect(error).to_have_text("Full name must be 2 to 60 characters.")
+        expect(page).to_have_url(CHECKOUT_URL)
+        expect(page.locator("[data-test='full-name']")).to_have_value(name)
+
+
+@pytest.mark.bug
+def test_postcode_must_be_six_digits(page: Page, base_url, credentials):
+    """TC131 [key:e326568c8c46] [plan:P-052]
+    provenance: confirmed against REQ-POSTCODE (ERR-14). Bug reproduction: fails until the app
+    rejects a postcode that is not 6 digits."""
+    _cart_with_lamp(page, base_url, credentials["standard"])
+    for postcode in ("12345", "1234567", "12a456"):
+        error = _fresh_checkout(page, base_url)
+        page.fill("[data-test='full-name']", "Ana Tan")
+        page.fill("[data-test='postcode']", postcode)
+        page.click("[data-test='place-order']")
+        expect(error).to_have_text("A 6-digit postcode is required.", timeout=3_000)
+        expect(page).to_have_url(CHECKOUT_URL)

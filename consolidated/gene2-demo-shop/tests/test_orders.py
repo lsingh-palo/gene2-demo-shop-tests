@@ -32,3 +32,23 @@ def test_order_history_newest_first(page: Page, base_url, credentials):
     expect(rows.locator("[data-test='order-items']")).to_have_text(["1", "1"])
     expect(rows.locator("[data-test='order-total']")).to_have_text(["$25.94", "$52.40"])
     expect(rows.locator("[data-test='order-status']")).to_have_text(["Placed", "Placed"])
+
+
+@pytest.mark.functional
+def test_order_history_shows_only_own_orders(page: Page, base_url, credentials):
+    """TC101 [key:f3e965778392] [plan:P-054]
+    provenance: confirmed against REQ-ROLE-02, REQ-MSG-03."""
+    auth_flow.login(page, base_url, credentials["standard"])
+    page.click("[data-test='add-p2']")
+    page.goto(f"{base_url}/checkout.html")
+    page.fill("[data-test='full-name']", "Ana Tan")
+    page.fill("[data-test='postcode']", "123456")
+    page.click("[data-test='place-order']")
+    expect(page).to_have_url(re.compile(r"/confirmation\.html$"))
+    page.goto(f"{base_url}/orders.html")
+    expect(page.locator("[data-test='order-row']")).to_have_count(1)
+    page.click("[data-test='logout']")
+    auth_flow.login(page, base_url, credentials["admin"])
+    page.goto(f"{base_url}/orders.html")
+    expect(page.locator("[data-test='order-row']")).to_have_count(0)
+    expect(page.locator("[data-test='orders-empty']")).to_have_text("No orders yet.")

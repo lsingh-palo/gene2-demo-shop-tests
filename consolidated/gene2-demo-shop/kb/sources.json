@@ -14,7 +14,13 @@
     "98369",
     "98389",
     "360472",
-    "131272"
+    "131272",
+    "655361",
+    "491528",
+    "557058",
+    "458754",
+    "655384",
+    "491549"
   ],
   "jira_jql": "project = SHOP AND labels = \"gene2-demo\" AND issuetype in (Story, Bug) ORDER BY key ASC",
   "note": "Confluence page ids and the Jira query are on the demo Atlassian site (evals/demo-app/atlassian-seed/atlassian_seed.py). The site host is not stored here: it comes from ATLASSIAN_BASE_URL (tools/_secrets.py)."

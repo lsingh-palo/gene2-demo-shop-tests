@@ -1,8 +1,8 @@
 ---
 source: confluence ${ATLASSIAN_BASE_URL}/wiki/pages/131272
 title: Glossary
-last_verified: 2026-09-24
-review_by: 2026-12-23
+last_verified: 2026-09-30
+review_by: 2026-12-29
 parse_warnings: 0
 note: current-state only. Struck-through / superseded text removed. Verify against the source before relying on any rule.
 ---

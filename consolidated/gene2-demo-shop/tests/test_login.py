@@ -66,3 +66,35 @@ def test_customer_cannot_use_admin_page(page: Page, base_url, credentials):
     expect(page.locator("[data-test='admin-denied']")).to_have_text("Admins only.")
     expect(page.locator("input[data-test^='admin-stock-p']")).to_have_count(0)
     expect(page.locator("[data-test='nav-admin']")).to_be_hidden()
+
+
+@pytest.mark.functional
+def test_empty_login_shows_required_message(page: Page, base_url):
+    """TC007 [key:6ec2d0ee1697] [plan:P-048]
+    provenance: confirmed against REQ-MSG-02 (ERR-02)."""
+    page.goto(f"{base_url}/index.html")
+    page.click("[data-test='login-button']")
+    expect(page.locator("[data-test='error']")).to_have_text("Username and password are required.")
+    expect(page).to_have_url(re.compile(r"/index\.html$"))
+
+
+@pytest.mark.functional
+def test_logout_clears_the_cart(page: Page, base_url, credentials):
+    """TC008 [key:a9402d3653b0] [plan:P-049]
+    provenance: confirmed against REQ-AUTH-01, REQ-MSG-03."""
+    auth_flow.login(page, base_url, credentials["standard"])
+    page.click("[data-test='add-p2']")
+    page.goto(f"{base_url}/cart.html")
+    expect(page.locator("[data-test='cart-item']")).to_have_count(1)
+    expect(page.locator("[data-test='cart-badge']")).to_have_text("1")
+    page.click("[data-test='logout']")
+    expect(page.locator("[data-test='login-button']")).to_be_visible()
+    auth_flow.login(page, base_url, credentials["standard"])
+    page.goto(f"{base_url}/cart.html")
+    empty = page.locator("[data-test='cart-empty']")
+    expect(empty).to_be_visible()
+    expect(empty).to_have_text("Your cart is empty.")
+    expect(page.locator("[data-test='cart-item']")).to_have_count(0)
+    badge = page.locator("[data-test='cart-badge']")
+    expect(badge).to_have_count(1)
+    expect(badge).to_be_hidden()

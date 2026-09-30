@@ -2,6 +2,99 @@
 
 Append-only. Newest entry directly under this header. Never edit or remove a past entry. Written by tools/changelog.py.
 
+## 2026-10-01T03:02:14+08:00  (functional, interactive)
+
+- Standalone run: test_runs/gene2-demo-shop-functional-20260930-102057/
+- Mode: interactive | Browsers: chromium | Workers: 1
+- Audit: covered 41, repaired 0, added 7, orphan 0
+- Plan: specs/plan-20260930-102057.md (approved before generation, Rule 21)
+- Admission funnel: proposed 7 -> collected 7 -> stable 7 -> mutation killed 7 -> new key 7 -> reviewer accepted 7
+- Added:
+    login: test_empty_login_shows_required_message (TC007)
+    login: test_logout_clears_the_cart (TC008)
+    checkout: test_full_name_length_is_enforced (TC031)
+    checkout: test_empty_address_is_rejected (TC039)
+    checkout: test_postcode_must_be_six_digits (TC131)
+    checkout: test_admin_checkout_address_is_saved_address (TC132)
+    orders: test_order_history_shows_only_own_orders (TC101)
+- Repaired: none
+- Result: 47 passed, 3 failed, 3 reran  (pass rate 94%)
+- Harness KPIs: acceptance rate 100%; heal success rate n/a; reruns 0; review minutes 4.0; bug true-positive rate n/a
+- Bugs: SHOP-37 (Medium) an order cannot be placed without a postcode (known; TC131 adds the non-6-digit partition, dry run only), SHOP-38 (High) double-submitting checkout records one order (known, dry run only)
+- Recorded late on 2026-10-01: this run finished 2026-09-30T11:04:25+08:00 and its entry was never committed; appended now instead of inserted into the history (append-only).
+- Functional re-run from the saved start (autonomy autonomous). Jira SHOP and Confluence SHOP re-fetched: 0 parse warnings, no requirement text changed; KB promoted automatically. Plan pre-approved by code (7/7 steps confirmed against a requirement).
+- Gaps closed: REQ-MSG-02 (ERR-02), REQ-AUTH-01 (logout clears the cart), REQ-ADDR-01 (name length, address), REQ-POSTCODE non-6-digit (P-019 of 2026-09-23, re-planned), REQ-ROLE-01, REQ-ROLE-02.
+- Admission round 1 dropped the TC131 bug reproduction as 'passed': gene2 admit forced GENE2_MODE=ci, and the conftest known-bug gate turned a failing @bug test into exit 0. Harness defect; re-admitted with --headed (the interactive mode of this run), 7/7.
+- Reviewer (fresh-context subagent; the named gene2-reviewer agent had no tools in this VS Code session): round 1 rejected TC008 (vacuous cart-cleared oracle), regenerated to the TC038 pattern and accepted in round 2. Notes: TC031 lacks the accepting boundaries 2 and 60; TC039 and TC101 end with a vacuous orders-empty text check; admission mutants did not touch TC008's cart-cleared lines.
+- The 3 failures are the bug reproductions TC032, TC033 and TC131, failing by design. CI mode locally (headless, 3 workers): 47 passed, 3 known bugs, exit 0.
+- Parity vs v2: REGRESSION 15 (same set as 2026-09-24), DIVERGENCE 0, SHARED FAILURE 3, PARITY 32.
+- Outside writes not made: the person was unavailable at the first-write hard stops for Jira, QMetry and GitHub, so all three stayed dry run (docs/jira-bugs-dry-run.txt, docs/qmetry-dry-run.txt).
+- Re-run this suite:
+    (python evals/demo-app/serve.py --variant v1 --port 8801 &) ; cd consolidated/gene2-demo-shop && source ../../.global_venv/bin/activate && pytest -v --base-url http://127.0.0.1:8801
+
+## 2026-10-01T03:02:14+08:00  (smoke, interactive)
+
+- Standalone run: test_runs/gene2-demo-shop-smoke-20260930-090355/
+- Mode: interactive | Browsers: chromium | Workers: 1
+- Audit: covered 4, repaired 0, added 2, orphan 0
+- Plan: specs/plan-20260930-090355.md (approved before generation, Rule 21)
+- Admission funnel: proposed 2 -> collected 2 -> stable 2 -> mutation killed 2 -> new key 2 -> reviewer accepted 2
+- Added:
+    product: test_product_page_from_catalog_shows_details (TC051)
+    checkout: test_place_order_shows_confirmation_and_empties_cart (TC038)
+- Repaired: none
+- Result: 41 passed, 2 failed, 2 reran  (pass rate 95%)
+- Harness KPIs: acceptance rate 100%; heal success rate n/a; reruns 0; review minutes 1.8; bug true-positive rate n/a
+- Bugs: none
+- Recorded late on 2026-10-01: this run finished 2026-09-30T09:23:08+08:00 and its entry was never committed; appended now instead of inserted into the history (append-only).
+- First smoke-level run on this suite (6 wanted: 4 covered, 2 added). Autonomy autonomous: plan gate approved by the person; audit and review gates automatic.
+- Reviewer round 1 rejected TC038 (vacuous cart-badge check on confirmation.html); regenerated with the check on cart.html, re-admitted and accepted in round 2.
+- The 2 failures are the existing bug reproductions TC032 (SHOP-37) and TC033 (SHOP-38), failing by design. No new bugs.
+- test_login_wrong_password_shows_mismatch_error is in the smoke set but has no smoke marker; left for a person (covered file not touched).
+- Re-run this suite:
+    (python evals/demo-app/serve.py --variant v1 --port 8801 &) ; cd consolidated/gene2-demo-shop && source ../../.global_venv/bin/activate && pytest -v --base-url http://127.0.0.1:8801
+
+## 2026-10-01T02:44:49+08:00  (extended, ci)
+
+- Standalone run: .gene2-local/runs/local-extended-20261001-024407/
+- Mode: ci | Browsers: chromium | Workers: 1
+- Audit: covered 50, repaired 0, added 0, orphan 0
+- Added: none
+- Repaired: none
+- Result: 47 passed, 3 failed, 0 reran  (pass rate 94%)
+- Bugs: none
+- Level: extended now runs smoke + functional + edges and the known-bug repros (50 of 50); the 3 failures are the known bugs (SHOP-37, SHOP-38, one unfiled).
+- Harness fix, no test added or changed: tests/conftest.py and run.sh re-vendored from the template. A visible browser pauses GENE2_SLOW_MO ms after each action (a local gene2 run: 300 ms, one worker) so the test can be followed; legacy HEADLESS variables no longer stop an interactive run; a runner with no screen runs headless.
+- Re-run this suite:
+    cd consolidated/gene2-demo-shop && GENE2_WORKERS=1 GENE2_SLOW_MO=300 ./run.sh --ci --headed -m '(smoke or functional or extended or bug) and not flaky'
+
+## 2026-10-01T01:41:32+08:00  (full, ci)
+
+- Standalone run: .gene2-local/runs/local-full-20261001-014041/
+- Mode: ci | Browsers: chromium | Workers: 3
+- Audit: covered 50, repaired 0, added 0, orphan 0
+- Added: none
+- Repaired: none
+- Result: 47 passed, 3 failed, 0 reran  (pass rate 94%)
+- Bugs: none
+- Harness fix, no test added or changed: tests/conftest.py re-vendored from the template. GENE2_HEADLESS=1 or "headless": true on a run that would be interactive now runs it in parallel mode (headless) instead of raising HEADLESS BLOCKED; the 3 failures are the known bugs.
+- Re-run this suite:
+    cd consolidated/gene2-demo-shop && ./run.sh --ci -m 'not flaky'
+
+## 2026-10-01T00:34:39+08:00  (full, ci)
+
+- Standalone run: .gene2-local/runs/local-full-20261001-003332/
+- Mode: ci | Browsers: chromium | Workers: 3
+- Audit: covered 50, repaired 0, added 0, orphan 0
+- Added: none
+- Repaired: none
+- Result: 47 passed, 3 failed, 0 reran  (pass rate 94%)
+- Bugs: none
+- Harness fix, no test added or changed: tests/conftest.py re-vendored from .github/templates/conftest.template.py (headed in every mode unless headless is asked for: GENE2_HEADLESS=1, config headless, or CI=true; before, ci mode forced headless so a gene2 start local run hid the browser); the 3 failures are the known bugs SHOP-37, SHOP-38 and the unfiled six-digit postcode repro.
+- run.sh re-vendored from .github/templates/run.sh.template: the printed re-run command is shell-quoted, GENE2_HEADLESS documented.
+- Re-run this suite:
+    cd consolidated/gene2-demo-shop && ./run.sh --ci -m 'not flaky'
+
 ## 2026-09-24T02:48:44+08:00  (functional, interactive)
 
 - Standalone run: test_runs/gene2-demo-shop-functional-20260924-015812/
