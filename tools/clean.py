@@ -7,6 +7,7 @@
     gene2 clean --slug S --qmetry --apply         # + QMetry: you TYPE the Jira host (QMetry lives in it)
     [--protect LABEL]                             # never delete an issue carrying LABEL (repeatable)
     [--reset-bugs]                                # with --jira: also every bug in the ledger, ledger cleared
+    [--no-local]                                  # remote only: the suite and its runs stay as they are
 
 What is found, never by key number or range, only by label and marker:
   local   consolidated/<slug>/ and test_runs/<slug>-*/ that git does NOT track. A committed suite or a
@@ -203,13 +204,17 @@ def confirm_host(host: str, what: str, prompt=tty_prompt) -> bool:
 # ------------------------------------------------------------------------------------------ main
 def run(a, root: pathlib.Path, jira=None, qmetry=None, prompt=tty_prompt, project: str = "", host: str = "") -> int:
     rc = 0
-    lp = local_plan(root, a.slug)
-    print(f"LOCAL ({root})")
+    if getattr(a, "no_local", False):  # remote only: the suite, its runs and its repo are kept as they are
+        lp = {"remove": [], "kept": []}
+        print(f"LOCAL ({root}): kept as it is (--no-local)")
+    else:
+        lp = local_plan(root, a.slug)
+        print(f"LOCAL ({root})")
     for p in lp["remove"]:
         print(f"  {'remove' if a.apply else 'would remove'}  {p.relative_to(root)}")
     for p, n in lp["kept"]:
         print(f"  kept          {p.relative_to(root)}  (tracked in git: {n} files; remove with a reviewed commit)")
-    if not lp["remove"] and not lp["kept"]:
+    if not lp["remove"] and not lp["kept"] and not getattr(a, "no_local", False):
         print("  nothing for this slug")
 
     if a.qmetry:
@@ -288,6 +293,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--qmetry", action="store_true")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--protect", action="append", default=[], help="never delete an issue with this label")
+    ap.add_argument("--no-local", action="store_true",
+                    help="remote only (QMetry, Jira): keep the local suite, its runs and outputs as they are")
     ap.add_argument("--reset-bugs", action="store_true",
                     help="with --jira: also delete the bugs runs filed that are in the suite's ledger (fingerprint "
                          "label + jira_bug.py's title format; seeded bugs are never taken) and clear those ledger entries")

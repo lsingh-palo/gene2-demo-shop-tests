@@ -2,6 +2,8 @@
 """Drive the GitHub Actions pipeline from the terminal: start a level, wait for it, read it back.
 
     gene2 ci trigger --level smoke [--version 2.3.7] [--env test] [--app-start "<command>"] [--ref <branch>] [--wait]
+                     # with --repo and no --ref: the repository's default branch (main or development),
+                     # merged work only; unmerged pull requests into it are listed, never run
     gene2 ci wait    [--run <id>] [--timeout 1500]      # default: the newest run of this branch
     gene2 ci runs    [--n 5]                            # the last runs with level, event and result
     gene2 ci fetch   [--run <id>] [--out-dir <dir> | --runs-dir <dir>]   # the run's report, junit, QMetry record
@@ -19,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import http.client
 import json
 import os
 import pathlib
@@ -44,6 +47,16 @@ def repo(root: pathlib.Path) -> tuple[str, str, str]:
     if not m:
         sys.exit(f"origin is not a github.com repository: {web or '(no origin)'}")
     return m.group(1), web, os.environ.get("GENE2_REPORT_URL") or run_report.pages_url(web)
+
+
+def repo_info(full: str) -> tuple[str, str, str]:
+    """(owner/name, web URL, Pages URL) for a named repository (not the current folder's origin)."""
+    web = f"https://github.com/{full}"
+    return full, web, os.environ.get("GENE2_REPORT_URL") or run_report.pages_url(web)
+
+
+def _repo(a, root: pathlib.Path) -> tuple[str, str, str]:
+    return repo_info(a.repo) if getattr(a, "repo", None) else repo(root)
 
 
 def token(required: bool = False) -> str:
@@ -97,10 +110,157 @@ def describe(r: dict) -> str:
             f"{r['status']:<11} {r.get('conclusion') or '-'}")
 
 
+def default_branch(full: str) -> str:
+    return call("GET", f"/repos/{full}").get("default_branch", "main")
+
+
+def _quiet(method: str, path: str, body: dict | None = None, auth: bool = False):
+    """call() that returns the error text instead of exiting the process."""
+    try:
+        return call(method, path, body, auth), ""
+    except SystemExit as e:
+        return None, str(e)
+
+
+def pending_prs(full: str, base: str) -> list[dict]:
+    """Open pull requests into `base` with commits `base` lacks: unmerged work a run of `base` would
+    not test. Newest first: {number, branch, url, mergeable, why}. Mergeable means GitHub reports it
+    clean (no conflict, required checks and reviews passed) and it is not a draft."""
+    out = []
+    for pr in call("GET", f"/repos/{full}/pulls?state=open&base={base}&sort=updated&direction=desc&per_page=20") or []:
+        cmp, _ = _quiet("GET", f"/repos/{full}/compare/{base}...{pr['head']['sha']}")
+        if cmp is not None and not cmp.get("ahead_by"):
+            continue
+        d = {}
+        for _ in range(4):  # mergeable_state is computed lazily: "unknown" on the first read
+            d = call("GET", f"/repos/{full}/pulls/{pr['number']}")
+            if d.get("mergeable_state") != "unknown":
+                break
+            time.sleep(2)
+        state = d.get("mergeable_state") or "unknown"
+        why = {"dirty": "merge conflicts", "blocked": "required checks or reviews missing",
+               "behind": "behind the base branch", "unstable": "some checks failing",
+               "draft": "a draft"}.get(state, state)
+        ok = state == "clean" and not d.get("draft") and d.get("mergeable") is True
+        out.append({"number": pr["number"], "branch": pr["head"]["ref"], "url": pr["html_url"],
+                    "mergeable": ok, "why": "" if ok else why})
+    return out
+
+
+def merge_pr(full: str, number: int) -> tuple[bool, str]:
+    """Merge one pull request with the method the repository allows. (merged, reason)."""
+    info = call("GET", f"/repos/{full}")
+    method = ("merge" if info.get("allow_merge_commit", True) else
+              "squash" if info.get("allow_squash_merge", True) else "rebase")
+    r, err = _quiet("PUT", f"/repos/{full}/pulls/{number}/merge", {"merge_method": method}, auth=True)
+    if r and r.get("merged"):
+        return True, f"merged ({method}) {r.get('sha', '')[:7]}"
+    return False, err or (r or {}).get("message", "not merged")
+
+
+SUITE_FILES = ("tests/*.py", "run.sh", "pytest.ini", "requirements.txt", "config/*.json")  # what decides a result
+
+
+def _blob_sha(data: bytes) -> str:
+    import hashlib
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def suite_drift(full: str, ref: str, suite: pathlib.Path) -> list[str]:
+    """The suite files that decide a run's result and differ between this folder and the pipeline
+    repository's copy on `ref` (consolidated/<slug>/): "~ path" differs, "+ path" only here,
+    "- path" only in the repository."""
+    import fnmatch
+    prefix = f"consolidated/{suite.name}/"
+
+    def wanted(rel: str) -> bool:
+        return (any(fnmatch.fnmatch(rel, p) for p in SUITE_FILES)
+                and not any(part in ("__pycache__", ".venv", "reports") for part in rel.split("/")))
+
+    tree = call("GET", f"/repos/{full}/git/trees/{ref}?recursive=1").get("tree", [])
+    theirs = {x["path"][len(prefix):]: x["sha"] for x in tree
+              if x["type"] == "blob" and x["path"].startswith(prefix) and wanted(x["path"][len(prefix):])}
+    ours = {p.relative_to(suite).as_posix(): _blob_sha(p.read_bytes()) for p in suite.rglob("*")
+            if p.is_file() and wanted(p.relative_to(suite).as_posix())}
+    out = ([f"~ {p}" for p in sorted(ours.keys() & theirs.keys()) if ours[p] != theirs[p]]
+           + [f"+ {p}" for p in sorted(ours.keys() - theirs.keys())]
+           + [f"- {p}" for p in sorted(theirs.keys() - ours.keys())])
+    template = next((t for t in (HERE.parent / ".github" / "templates" / "ci" / "github-actions.yml",
+                                 HERE.parent / "templates" / "ci" / "github-actions.yml") if t.exists()), None)
+    wf = next((x["sha"] for x in tree if x["path"] == f".github/workflows/{WORKFLOW}"), None)
+    if template and wf and wf != _blob_sha(template.read_bytes()):
+        out.append(f"~ .github/workflows/{WORKFLOW} (not the current CI template)")
+    harness = (HERE.parent / ".github").is_dir()  # the plugin's scripts carry rewritten usage lines
+    for x in tree if harness else []:  # the harness tools the pipeline carries (QMetry sync, run report, ...)
+        m = re.fullmatch(r"tools/(\w+\.py)", x["path"])
+        if m and (HERE / m.group(1)).exists() and x["sha"] != _blob_sha((HERE / m.group(1)).read_bytes()):
+            out.append(f"~ {x['path']} (not the current harness tool)")
+    return out
+
+
+def dispatch(full: str, ref: str, inputs: dict) -> dict | None:
+    """Start the workflow and return its run (or None if it did not show up within 90 s)."""
+    t0 = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=10)
+    call("POST", f"/repos/{full}/actions/workflows/{WORKFLOW}/dispatches", {"ref": ref, "inputs": inputs}, auth=True)
+    for _ in range(30):
+        time.sleep(3)
+        for r in runs(full, ref, 5, "workflow_dispatch"):
+            if dt.datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) >= t0:
+                return r
+    return None
+
+
+def follow(full: str, run_id, say, timeout: int = 1500, every: int = 10) -> tuple[dict, list]:
+    """Poll a run until it completes; say(line) for every change of the jobs' state."""
+    deadline, last = time.time() + timeout, ""
+    r, jobs = {"status": "queued"}, []
+    while True:
+        try:
+            r = call("GET", f"/repos/{full}/actions/runs/{run_id}")
+            jobs = call("GET", f"/repos/{full}/actions/runs/{run_id}/jobs").get("jobs", [])
+        except (OSError, http.client.HTTPException):  # a dropped connection: the run goes on, poll again
+            if time.time() > deadline:
+                return r, jobs
+            time.sleep(every)
+            continue
+        line = ", ".join(f"{j['name']}: {j.get('conclusion') or j['status']}" for j in jobs) or r["status"]
+        if line != last:
+            say(line)
+            last = line
+        if r["status"] == "completed" or time.time() > deadline:
+            return r, jobs
+        time.sleep(every)
+
+
+def fetch_report(pages: str, run_id, runs_dir: pathlib.Path | None = None, tries: int = 12) -> dict | None:
+    """The run's report from the live site once it holds this run (the CDN can lag a minute);
+    with runs_dir, also file it with the local run reports."""
+    for _ in range(tries):
+        txt = fetch_text(f"{pages}run-report.json")
+        if txt and str(run_id) in (json.loads(txt).get("links") or {}).get("ci_run", ""):
+            d = json.loads(txt)
+            if runs_dir:
+                out = runs_dir / d["run_id"]
+                out.mkdir(parents=True, exist_ok=True)
+                for name in ("run-report.md", "run-report.json", "junit.xml", "qmetry-run.json"):
+                    t = fetch_text(f"{pages}{name}")
+                    if t is not None:
+                        (out / name).write_text(t)
+                (runs_dir / f"{d['run_id']}.md").write_text((out / "run-report.md").read_text())
+                (runs_dir / f"{d['run_id']}.json").write_text(txt)
+                run_report.rebuild_index(runs_dir)
+            return d
+        time.sleep(10)
+    return None
+
+
 # ------------------------------------------------------------------------------------------ commands
 def cmd_trigger(a, root) -> int:
-    full, web, _ = repo(root)
-    ref = a.ref or branch(root)
+    full, web, _ = _repo(a, root)
+    ref = a.ref or (default_branch(full) if getattr(a, "repo", None) else branch(root))
+    for pr in pending_prs(full, ref):
+        print(f"not merged: #{pr['number']} {pr['branch']} ({pr['url']}) - this run does not include it; "
+              "`gene2 run --ci --merge` merges first")
     local, remote = run_report.git(root, "rev-parse", "HEAD"), run_report.git(root, "rev-parse", f"origin/{ref}")
     if local and remote and local != remote:
         print(f"warning: your {ref} ({local[:7]}) is not what GitHub has ({remote[:7]}); CI runs GitHub's. Push first.")
@@ -128,15 +288,22 @@ def cmd_trigger(a, root) -> int:
 
 
 def cmd_wait(a, root) -> int:
-    full, web, pages = repo(root)
-    run_id = a.run or (runs(full, branch(root), 1) or [{}])[0].get("id")
+    full, web, pages = _repo(a, root)
+    run_id = a.run or (runs(full, None if getattr(a, "repo", None) else branch(root), 1) or [{}])[0].get("id")
     if not run_id:
         sys.exit("no run found for this branch")
     deadline = time.time() + a.timeout
     last = ""
+    r, jobs = {"status": "queued"}, []
     while True:
-        r = call("GET", f"/repos/{full}/actions/runs/{run_id}")
-        jobs = call("GET", f"/repos/{full}/actions/runs/{run_id}/jobs").get("jobs", [])
+        try:
+            r = call("GET", f"/repos/{full}/actions/runs/{run_id}")
+            jobs = call("GET", f"/repos/{full}/actions/runs/{run_id}/jobs").get("jobs", [])
+        except (OSError, http.client.HTTPException):  # a dropped connection: the run goes on, poll again
+            if time.time() > deadline:
+                return r, jobs
+            time.sleep(every)
+            continue
         line = ", ".join(f"{j['name']}: {j.get('conclusion') or j['status']}" for j in jobs) or r["status"]
         if line != last:
             print(f"[{time.strftime('%H:%M:%S')}] {line}")
@@ -166,7 +333,7 @@ def cmd_wait(a, root) -> int:
 
 
 def cmd_runs(a, root) -> int:
-    full, web, pages = repo(root)
+    full, web, pages = _repo(a, root)
     print(f"{web}/actions   live report: {pages}")
     for r in runs(full, None, a.n):
         print(describe(r))
@@ -174,7 +341,7 @@ def cmd_runs(a, root) -> int:
 
 
 def cmd_fetch(a, root) -> int:
-    full, _, pages = repo(root)
+    full, _, pages = _repo(a, root)
     rep = fetch_text(f"{pages}run-report.json")
     if not rep:
         sys.exit(f"no run report at {pages}run-report.json yet")
@@ -221,6 +388,8 @@ def main(argv: list[str] | None = None) -> int:
     f.add_argument("--run", type=int)
     f.add_argument("--out-dir")
     f.add_argument("--runs-dir", help="file the run with the local run reports (as run_report.py --out-dir does)")
+    for sp in (t, w, r, f):
+        sp.add_argument("--repo", help="owner/name, when it is not this folder's origin")
     a = ap.parse_args(argv)
     root = pathlib.Path.cwd()
     return {"trigger": cmd_trigger, "wait": cmd_wait, "runs": cmd_runs, "fetch": cmd_fetch}[a.cmd](a, root)

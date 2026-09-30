@@ -39,16 +39,21 @@ def read_junit(path: pathlib.Path) -> dict:
     suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
     started = next((s.get("timestamp") for s in suites if s.get("timestamp")), None)
     tests = {}
+    crash = ""
     for tc in root.iter("testcase"):
         name = re.sub(r"\[.*\]$", "", tc.get("name", ""))
         fail = next((c for c in tc if c.tag in ("failure", "error")), None)
+        if name == "internal" and not tc.get("classname"):  # pytest/xdist crashed: not a test
+            crash = ((fail.get("message") if fail is not None else "") or "pytest internal error").strip()[:160]
+            continue
         skip = next((c for c in tc if c.tag == "skipped"), None)
         outcome = "failed" if fail is not None else ("skipped" if skip is not None else "passed")
         text = ((fail.get("message") or fail.text or "") if fail is not None else "").strip()
         msg = reason(text, fail.text or "" if fail is not None else "")
         tests[name] = {"outcome": outcome, "message": msg, "time": float(tc.get("time") or 0),
                        "classname": tc.get("classname", "")}
-    return {"started": started, "tests": tests, "time": sum(float(s.get("time") or 0) for s in suites)}
+    return {"started": started, "tests": tests, "time": sum(float(s.get("time") or 0) for s in suites),
+            "runner_crash": crash}
 
 
 def _json(path: pathlib.Path, default):
@@ -141,7 +146,8 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
     return {
         "slug": slug, "run_id": run_id or junit.parent.name, "level": level, "where": where or ("ci" if ci_url else "local"),
         "started": j["started"], "duration_s": round(j["time"], 1), "totals": {**totals, "total": len(j["tests"])},
-        "verdict": "FAIL" if unexpected else "PASS",
+        "verdict": "FAIL" if unexpected or j["runner_crash"] else "PASS",
+        "runner_crash": j["runner_crash"],
         "known_bugs_failed": sum(1 for r in rows if r["known_bug"]),
         "modules": modules, "failed": rows, "new_cases": new_cases, "new_tests": new_tests,
         "tests": sorted(j["tests"]),
@@ -176,6 +182,8 @@ def failure_lines(r: dict) -> list[str]:
     failed = r.get("failed") or []
     bugs = r.get("bugs") or []
     out = []
+    if r.get("runner_crash"):
+        out.append("  RUNNER     pytest crashed mid-run, so some tests have no result: rerun (not a product bug)")
     if failed:
         known = sum(1 for x in failed if x.get("known_bug"))
         open_bug = sum(1 for x in failed if not x.get("known_bug") and x.get("bug"))

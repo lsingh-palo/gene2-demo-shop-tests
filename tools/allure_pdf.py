@@ -238,10 +238,12 @@ def to_pdf(html_path: pathlib.Path, pdf_path: pathlib.Path) -> None:
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         b = p.chromium.launch()
-        page = b.new_page()
-        page.goto(html_path.resolve().as_uri())
-        page.pdf(path=str(pdf_path), format="A4", print_background=True)
-        b.close()
+        try:  # closed even when the page fails: no browser is left behind
+            page = b.new_page()
+            page.goto(html_path.resolve().as_uri())
+            page.pdf(path=str(pdf_path), format="A4", print_background=True)
+        finally:
+            b.close()
 
 
 def main(argv: list[str] | None = None) -> int:

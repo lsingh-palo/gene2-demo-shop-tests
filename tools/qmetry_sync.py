@@ -173,6 +173,19 @@ class Client:
 
 
 LEVEL_TAGS = ("smoke", "functional", "extended", "exploratory")
+# A level runs only its own tests (knowledge/scenario-counts.md): smoke the smoke-marked ones,
+# functional the functional-marked ones, extended the edge / security tests and the known-bug
+# reproductions (`bug`), exploratory the tests promoted from a session; "full" runs every test.
+# One definition for the local run, CI and the QMetry labels.
+TIERS = {"smoke": ("smoke",), "functional": ("functional",), "extended": ("extended", "bug"),
+         "exploratory": ("exploratory",)}
+
+
+def level_marker(level: str) -> str:
+    """The pytest -m expression for a level: "extended" -> "(extended or bug) and not flaky"."""
+    if level in TIERS:
+        return f"({' or '.join(TIERS[level])}) and not flaky"
+    return "not flaky"  # full: every test but the quarantined
 
 
 def test_levels(suite: pathlib.Path, test_file: str, test_name: str, manifest_level: str = "") -> list[str]:
@@ -188,13 +201,14 @@ def test_levels(suite: pathlib.Path, test_file: str, test_name: str, manifest_le
                 j = i - 1
                 while j >= 0 and lines[j].strip().startswith("@"):
                     m = re.match(r"@pytest\.mark\.(\w+)", lines[j].strip())
-                    if m and m.group(1) in LEVEL_TAGS:
+                    if m and (m.group(1) in LEVEL_TAGS or m.group(1) == "bug"):
                         found.append(m.group(1))
                     j -= 1
                 break
     if not found and manifest_level in LEVEL_TAGS:
         found = [manifest_level]
-    return sorted(set(found), key=LEVEL_TAGS.index)
+    runs_in = {lv for lv, tiers in TIERS.items() if set(found) & set(tiers)}  # a bug repro runs in extended
+    return sorted(runs_in, key=LEVEL_TAGS.index)
 
 
 def manifest_cases(slug: str, root: pathlib.Path) -> list[dict]:
@@ -278,6 +292,15 @@ class Sync:
                     if self.apply and all(level_ids.get(lv) for lv in add):
                         # QTM4J updates labels as an add-list, not a full list (a full list is a 400)
                         self.c.update_case(h["id"], ver, {"labels": {"add": [level_ids[lv] for lv in add]}})
+                stale = sorted(have & set(LEVEL_TAGS) - set(case.get("levels", [])), key=LEVEL_TAGS.index)
+                if stale:  # a level label the case no longer runs at
+                    self.act("label", f"{h.get('key')} - {', '.join(stale)}")
+                    if self.apply:
+                        ids = [i for i in self._label_ids(stale) if i is not None]
+                        try:
+                            self.c.update_case(h["id"], ver, {"labels": {"delete": ids}})
+                        except Exception as e:  # never fail a run on a label clean-up
+                            self.act("warn", f"{h.get('key')} kept {', '.join(stale)}: {str(e)[:80]}")
             else:
                 self.act("create", f"test case {case['summary']}")
                 self.new_cases.append(case["tc_id"])
@@ -317,7 +340,7 @@ class Sync:
 
     def results(self, slug: str, run_id: str, cases: list[dict], outcomes: dict[str, str],
                 bugs_by_test: dict[str, str] | None = None, env: str = "test",
-                version: str | None = None, ci_url: str = "") -> str:
+                version: str | None = None, ci_url: str = "", level: str = "") -> str:
         """One cycle per run; link every case with a result under a QMetry Environment and Build
         (find-or-created by name; version defaults to one past the highest Build already in the
         project - read from QMetry itself via pick_next_build_version, not a local file, so it is
@@ -359,8 +382,9 @@ class Sync:
                     build_id = have_build.get(version) or self.c.add_build(self.pid, version)
             elif not version:
                 version = "1.0"
-            self.act("create", f"test cycle {summary!r} with {len(with_result)} cases (env {env}, version {version})")
-            live_label = self._label_ids([LIVE])
+            self.act("create", f"test cycle {summary!r} with {len(with_result)} cases (env {env}, version {version}"
+                     + (f", level {level}" if level else "") + ")")
+            live_label = self._label_ids([LIVE] + ([level] if level in LEVEL_TAGS else []))
             cyc = (self.c.create_cycle({"projectId": self.pid, "summary": summary, "labels": [i for i in live_label if i is not None],
                                         "description": f"Gen-e2 automated run {run_id}\nEnvironment: {env}\nVersion: {version}"
                                                        + (f"\nCI run: {ci_url}" if ci_url else "")})
@@ -531,6 +555,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--env", default="test", help="QMetry Environment name (default: test)")
     ap.add_argument("--version", help="QMetry Build name; default: auto-increment 1.0, 1.1, 1.2, ... (never repeated)")
+    ap.add_argument("--level", default="", help="the level this run executed (labels the cycle; its executions "
+                                               "are exactly the tests in --junit)")
     a = ap.parse_args(argv)
     root = pathlib.Path.cwd()  # the project, like every other tool
     cases = manifest_cases(a.slug, root)
@@ -563,7 +589,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "cases":
         s.cases(cases)
     else:
-        version = s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version, ci_run_url())
+        version = s.results(a.slug, run_id, cases, outcomes, bugs_by_test(a.slug, root), a.env, version, ci_run_url(),
+                            a.level)
         write_allure_environment(find_allure_results(a.slug, a.junit, root), a.env, version, run_id,
                                  s.run_info.get("cycle_key") or "", ci_run_url())
     if a.apply and s.tc_keys:
