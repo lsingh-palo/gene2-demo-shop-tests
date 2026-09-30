@@ -125,7 +125,8 @@ def _quiet(method: str, path: str, body: dict | None = None, auth: bool = False)
 def pending_prs(full: str, base: str) -> list[dict]:
     """Open pull requests into `base` with commits `base` lacks: unmerged work a run of `base` would
     not test. Newest first: {number, branch, url, mergeable, why}. Mergeable means GitHub reports it
-    clean (no conflict, required checks and reviews passed) and it is not a draft."""
+    clean (no conflict, required checks and reviews passed), it is not a draft, and its branch lives
+    in this repository (a pull request from a fork is never merged by a run)."""
     out = []
     for pr in call("GET", f"/repos/{full}/pulls?state=open&base={base}&sort=updated&direction=desc&per_page=20") or []:
         cmp, _ = _quiet("GET", f"/repos/{full}/compare/{base}...{pr['head']['sha']}")
@@ -138,10 +139,15 @@ def pending_prs(full: str, base: str) -> list[dict]:
                 break
             time.sleep(2)
         state = d.get("mergeable_state") or "unknown"
+        if state == "unstable":  # GitHub says unstable for checks still running as well as failed ones
+            runs_ = call("GET", f"/repos/{full}/commits/{pr['head']['sha']}/check-runs?per_page=50").get("check_runs", [])
+            state = "running" if any(r.get("status") != "completed" for r in runs_) else state
         why = {"dirty": "merge conflicts", "blocked": "required checks or reviews missing",
                "behind": "behind the base branch", "unstable": "some checks failing",
-               "draft": "a draft"}.get(state, state)
+               "running": "its checks were still running", "draft": "a draft"}.get(state, state)
         ok = state == "clean" and not d.get("draft") and d.get("mergeable") is True
+        if ((pr.get("head") or {}).get("repo") or {}).get("full_name") != full:  # a fork: never merged by a run
+            ok, why = False, "from another repository (a fork): merge it by hand"
         out.append({"number": pr["number"], "branch": pr["head"]["ref"], "url": pr["html_url"],
                     "mergeable": ok, "why": "" if ok else why})
     return out
