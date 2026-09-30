@@ -138,9 +138,12 @@ def pending_prs(full: str, base: str) -> list[dict]:
                 break
             time.sleep(2)
         state = d.get("mergeable_state") or "unknown"
+        if state == "unstable":  # GitHub says unstable for checks still running as well as failed ones
+            runs_ = call("GET", f"/repos/{full}/commits/{pr['head']['sha']}/check-runs?per_page=50").get("check_runs", [])
+            state = "running" if any(r.get("status") != "completed" for r in runs_) else state
         why = {"dirty": "merge conflicts", "blocked": "required checks or reviews missing",
                "behind": "behind the base branch", "unstable": "some checks failing",
-               "draft": "a draft"}.get(state, state)
+               "running": "its checks were still running", "draft": "a draft"}.get(state, state)
         ok = state == "clean" and not d.get("draft") and d.get("mergeable") is True
         out.append({"number": pr["number"], "branch": pr["head"]["ref"], "url": pr["html_url"],
                     "mergeable": ok, "why": "" if ok else why})
