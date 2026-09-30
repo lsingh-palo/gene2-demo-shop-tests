@@ -62,9 +62,9 @@ def main(argv: list[str] | None = None) -> int:
 
     git = lambda *x: run_report.git(root, *x)  # noqa: E731
     # a wrapper (such as an app repo's launcher) can name its own commands for the fixes
-    local_clean = os.environ.get("GENE2_LOCAL_CLEAN_CMD") or f"python tools/clean.py --slug {a.slug} --apply"
+    local_clean = os.environ.get("GENE2_LOCAL_CLEAN_CMD") or "python tools/clean.py --slug %s --apply" % a.slug
     remote_clean = (os.environ.get("GENE2_REMOTE_CLEAN_CMD")
-                    or f"python tools/clean.py --slug {a.slug} --jira --qmetry --reset-bugs --apply")
+                    or "python tools/clean.py --slug %s --jira --qmetry --reset-bugs --apply" % a.slug)
     br = git("rev-parse", "--abbrev-ref", "HEAD")
     remote = run_report.web_remote(git("remote", "get-url", "origin"))
     if not a.offline:
