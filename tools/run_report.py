@@ -45,7 +45,7 @@ def read_junit(path: pathlib.Path) -> dict:
         skip = next((c for c in tc if c.tag == "skipped"), None)
         outcome = "failed" if fail is not None else ("skipped" if skip is not None else "passed")
         text = ((fail.get("message") or fail.text or "") if fail is not None else "").strip()
-        msg = text.splitlines()[0][:160] if text else ""
+        msg = reason(text, fail.text or "" if fail is not None else "")
         tests[name] = {"outcome": outcome, "message": msg, "time": float(tc.get("time") or 0),
                        "classname": tc.get("classname", "")}
     return {"started": started, "tests": tests, "time": sum(float(s.get("time") or 0) for s in suites)}
@@ -98,10 +98,13 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
     manifest = {s["test_name"]: s for s in _json(suite / "suite-manifest.json", {}).get("scenarios", [])}
     qrun = _json(qmetry_run or junit.parent / "qmetry-run.json", {})
     tc_keys = {**_json(suite / "qmetry-cases.json", {}), **(qrun.get("tc_keys") or {})}
-    ledger = {}
+    ledger, by_title = {}, {}
     for b in _json(suite / "bugs.json", {"bugs": []}).get("bugs", []):
-        if b.get("test") and b.get("jira") and b.get("status") == "open":
-            ledger[b["test"].split("::")[-1]] = b
+        if b.get("jira") and b.get("status") == "open":
+            if b.get("test"):
+                ledger[b["test"].split("::")[-1]] = b
+            elif b.get("title"):  # filed from a triage before the test was named: its title is the scenario's
+                by_title[b["title"].strip().lower()] = b
     started = _parse_time(j["started"])
     import triage  # is_bug_marked: the same known-bug rule the triage uses
 
@@ -113,7 +116,7 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
         m[t["outcome"]] += 1
         if t["outcome"] != "failed":
             continue
-        bug = ledger.get(name)
+        bug = ledger.get(name) or by_title.get((s.get("title") or "").strip().lower())
         filed = _parse_time((bug or {}).get("filed"))
         when = ("none yet" if not bug else
                 "filed now" if (filed and started and filed >= started) else
@@ -153,6 +156,47 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
                   "jira_project_bugs": (f"{jira_base.rstrip('/')}/issues/?jql=labels%20%3D%20%22gene2-suite-{slug}%22"
                                         if jira_base else "")},
     }
+
+
+def reason(message: str, full: str = "") -> str:
+    """One line a person can act on: "expected to have text '$3.40', actual $4.25"."""
+    first = (message.strip().splitlines() or [""])[0]
+    first = re.sub(r"^(AssertionError|Error|Exception):\s*", "", first)
+    first = re.sub(r"^Locator expected", "expected", first)
+    actual = re.search(r"Actual value:[ \t]*([^\n]*)", full or message)
+    value = actual.group(1).strip() if actual else ""
+    if value and "actual" not in first.lower():
+        first += ", not found" if value == "None" else f", actual {value}"
+    return first[:160]
+
+
+def failure_lines(r: dict) -> list[str]:
+    """The same failure and bug block on every end screen (a local run, a pipeline run, a build):
+    each failure with its reason and its bug, then the bugs linked to the suite."""
+    failed = r.get("failed") or []
+    bugs = r.get("bugs") or []
+    out = []
+    if failed:
+        known = sum(1 for x in failed if x.get("known_bug"))
+        open_bug = sum(1 for x in failed if not x.get("known_bug") and x.get("bug"))
+        new = len(failed) - known - open_bug
+        parts = [f"{new} new (no bug yet)" if new else "", f"{open_bug} with an open bug" if open_bug else "",
+                 f"{known} known bug{'' if known == 1 else 's'} (failing as designed)" if known else ""]
+        out.append(f"  failures   {len(failed)}: " + ", ".join(x for x in parts if x))
+        w = max(len(x["test"]) for x in failed)
+        # new first, then with an open bug, then known bugs; the unfiled ones last, next to their hint
+        rank = lambda x: (x.get("known_bug", False), bool(x.get("bug")) != x.get("known_bug", False), x["test"])  # noqa: E731
+        for x in sorted(failed, key=rank):
+            tag = x.get("bug") or ("unfiled" if x.get("known_bug") else "NEW")
+            msg = x.get("message") or "(no message)"
+            out.append(f"    {tag:<9} {x['test']:<{w}}  {msg if len(msg) <= 90 else msg[:87] + '...'}")
+        if any(x.get("known_bug") and not x.get("bug") for x in failed):
+            out.append("             unfiled = a known bug with no open Jira bug yet: file it (gene2 triage)")
+    link = (r.get("links") or {}).get("jira_project_bugs", "")
+    out.append(f"  bugs       {', '.join(bugs) + ' linked' if bugs else 'none linked'}"
+               + (f"  ({len(r.get('bugs_filed_now') or [])} filed now)" if r.get("bugs_filed_now") else "")
+               + (f"  {link}" if link else ""))
+    return out
 
 
 def pending(r: dict) -> list[str]:
