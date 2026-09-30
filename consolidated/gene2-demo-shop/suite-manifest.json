@@ -4,10 +4,11 @@
     "primary": "http://127.0.0.1:8801"
   },
   "levels": [
-    "functional"
+    "functional",
+    "smoke"
   ],
   "created": "2026-09-23T18:57:53+08:00",
-  "updated": "2026-09-24T02:43:07+08:00",
+  "updated": "2026-09-30T10:52:48+08:00",
   "scenarios": [
     {
       "key": "864b1923b6e7",
@@ -1395,6 +1396,312 @@
         "verdict": "accepted-with-note",
         "note": "The product-page button is only asserted disabled. REQ-STOCK-01 also requires it to read 'Out of stock' there.",
         "run": "gene2-demo-shop-functional-20260924-015812"
+      }
+    },
+    {
+      "key": "3efe638be7a0",
+      "tc_id": "TC038",
+      "level": "smoke",
+      "module": "checkout",
+      "title": "placing an order shows the confirmation and empties the cart",
+      "type": "positive",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_place_order_shows_confirmation_and_empties_cart",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-smoke-20260930-090355",
+      "last_verified_run": "gene2-demo-shop-smoke-20260930-090355",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-CHK-02",
+      "plan_step": "P-047",
+      "plan_file": "specs/plan-20260930-090355.md",
+      "requirement": [
+        "REQ-CHK-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-smoke-20260930-090355"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Round 2 (resubmitted after a round-1 rejection for a vacuous badge check on confirmation.html). Badge now asserted on cart.html (count 1, hidden); verified live that both the badge and cart-empty checks can fail. Weak spots: nothing asserts the cart was non-empty before the order (TC020 covers add-to-cart); REQ-CHK-02 promo clearing not covered; lines 26-29 not mutated by admission; REQ-PAY-01 only implicit.",
+        "run": "gene2-demo-shop-smoke-20260930-090355"
+      }
+    },
+    {
+      "key": "81a8e30c1f10",
+      "tc_id": "TC051",
+      "level": "smoke",
+      "module": "product",
+      "title": "opening a product from the catalog shows its details",
+      "type": "positive",
+      "test_file": "tests/test_product.py",
+      "test_name": "test_product_page_from_catalog_shows_details",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-smoke-20260930-090355",
+      "last_verified_run": "gene2-demo-shop-smoke-20260930-090355",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-PDP-01",
+      "plan_step": "P-046",
+      "plan_file": "specs/plan-20260930-090355.md",
+      "requirement": [
+        "REQ-PDP-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-smoke-20260930-090355"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Matches P-046 and REQ-PDP-01 (rating 4.5 out of 5 (2 reviews) verified live). Weak spots: the description check is only regex \\S; the price is hardcoded $42.50 and not cross-checked against the catalog card; the review list required by REQ-PDP-01 is not asserted; the rating line was not mutation-tested (exact match, so not vacuous). Overlaps TC050 on the rating formula with a different data point; keep both.",
+        "run": "gene2-demo-shop-smoke-20260930-090355"
+      }
+    },
+    {
+      "key": "a0d04d9bed00",
+      "tc_id": "TC132",
+      "level": "functional",
+      "module": "checkout",
+      "title": "the admin checkout address starts as the saved address",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_admin_checkout_address_is_saved_address",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ROLE-01",
+      "plan_step": "P-053",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-ROLE-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 1,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "52385492512f",
+      "tc_id": "TC039",
+      "level": "functional",
+      "module": "checkout",
+      "title": "an empty address is rejected",
+      "type": "negative",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_empty_address_is_rejected",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ADDR-01",
+      "plan_step": "P-051",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-ADDR-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Trailing orders-empty to_have_text is vacuous (element always in DOM, only hidden toggled); use to_be_visible() or order-row to_have_count(0). Docstring cites REQ-MSG-03, not in the plan's provenance for P-051.",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "5191642001a8",
+      "tc_id": "TC031",
+      "level": "functional",
+      "module": "checkout",
+      "title": "a full name shorter than 2 or longer than 60 characters is rejected",
+      "type": "boundary",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_full_name_length_is_enforced",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ADDR-01",
+      "plan_step": "P-050",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-ADDR-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Boundary step tests only the rejecting side (1, 61); the accepting boundaries 2 and 60 are not asserted, so an off-by-one rejecting 2 or 60 would pass. Add them in a later plan.",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "e326568c8c46",
+      "tc_id": "TC131",
+      "level": "functional",
+      "module": "checkout",
+      "title": "a postcode that is not 6 digits is rejected",
+      "type": "requirement",
+      "test_file": "tests/test_checkout.py",
+      "test_name": "test_postcode_must_be_six_digits",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-POSTCODE",
+      "plan_step": "P-052",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-POSTCODE"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 0,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "bug reproduction - fails until the app is fixed",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "6ec2d0ee1697",
+      "tc_id": "TC007",
+      "level": "functional",
+      "module": "login",
+      "title": "empty username and password show the required message",
+      "type": "negative",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_empty_login_shows_required_message",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-MSG-02",
+      "plan_step": "P-048",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-MSG-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 2,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted",
+        "note": "",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "a9402d3653b0",
+      "tc_id": "TC008",
+      "level": "functional",
+      "module": "login",
+      "title": "logging out clears the cart",
+      "type": "requirement",
+      "test_file": "tests/test_login.py",
+      "test_name": "test_logout_clears_the_cart",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-AUTH-01",
+      "plan_step": "P-049",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-AUTH-01"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "Round 2 (regenerated after a round-1 rejection for a vacuous cart-cleared oracle). TC038 pattern now: cart-empty visible, exact text, cart-item count 0, badge count 1 then hidden; would fail on a build whose logout keeps the cart (traced in the app source). Admission mutants only hit setup lines 28, 29, 31; the cart-cleared checks (lines 35-40) were not mutated.",
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      }
+    },
+    {
+      "key": "f3e965778392",
+      "tc_id": "TC101",
+      "level": "functional",
+      "module": "orders",
+      "title": "order history shows only the logged-in account's orders",
+      "type": "security",
+      "test_file": "tests/test_orders.py",
+      "test_name": "test_order_history_shows_only_own_orders",
+      "app": "primary",
+      "state": "active",
+      "orphan": false,
+      "source_run": "gene2-demo-shop-functional-20260930-102057",
+      "last_verified_run": "gene2-demo-shop-functional-20260930-102057",
+      "verified_count": 0,
+      "trust": "provisional",
+      "provenance": "confirmed against REQ-ROLE-02",
+      "plan_step": "P-054",
+      "plan_file": "specs/plan-20260930-102057.md",
+      "requirement": [
+        "REQ-ROLE-02"
+      ],
+      "admission": {
+        "stable_runs": 3,
+        "mutants_killed": 3,
+        "mutants_survived": 0,
+        "run": "gene2-demo-shop-functional-20260930-102057"
+      },
+      "reviewed": {
+        "verdict": "accepted-with-note",
+        "note": "orders-empty to_have_text is vacuous (always in DOM); use to_be_visible(). Does not prove standard_user's order still exists after the account switch, so a logout that wiped demo_orders would pass; re-login as standard_user and assert 1 row.",
+        "run": "gene2-demo-shop-functional-20260930-102057"
       }
     }
   ]

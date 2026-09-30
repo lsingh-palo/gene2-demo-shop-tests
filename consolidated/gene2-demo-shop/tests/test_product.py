@@ -19,3 +19,19 @@ def test_average_rating_to_one_decimal(page: Page, base_url, credentials):
     expect(page.locator(RATING)).to_have_text("4.7 out of 5 (3 reviews)")
     page.goto(f"{base_url}/product.html?id=p1")
     expect(page.locator(RATING)).to_have_text("No reviews yet")
+import re
+
+
+@pytest.mark.smoke
+def test_product_page_from_catalog_shows_details(page: Page, base_url, credentials):
+    """TC051 [key:81a8e30c1f10] [plan:P-046]
+    provenance: confirmed against REQ-PDP-01. Desk Lamp reviews 5 and 4: mean 4.5."""
+    auth_flow.login(page, base_url, credentials["standard"])
+    page.click("[data-test='product-link-p2']")
+    expect(page).to_have_url(re.compile(r"/product\.html\?id=p2$"))
+    expect(page.locator("[data-test='pdp-name']")).to_have_text("Desk Lamp")
+    expect(page.locator("[data-test='pdp-price']")).to_have_text("$42.50")
+    expect(page.locator("[data-test='pdp-category']")).to_have_text("Home")
+    expect(page.locator("[data-test='pdp-stock']")).to_have_text("In stock")
+    expect(page.locator("[data-test='pdp-description']")).to_have_text(re.compile(r"\S"))
+    expect(page.locator("[data-test='pdp-rating']")).to_have_text("4.5 out of 5 (2 reviews)")
