@@ -2,7 +2,7 @@
 
 The Playwright + pytest suite that Gen-e2 built for the demo shop, standalone.
 
-    consolidated/gene2-demo-shop/run.sh          # headed, one worker
+    consolidated/gene2-demo-shop/run.sh          # headed, one worker, slowed so it can be watched
     consolidated/gene2-demo-shop/run.sh --ci     # parallel, JUnit + HTML + Allure (browser visible; GENE2_HEADLESS=1 or a CI runner hides it)
 
 `demo-app/` is the demo shop itself (v1 = current release, v2 = release candidate). GitHub Actions

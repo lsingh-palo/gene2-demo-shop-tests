@@ -157,13 +157,14 @@ def c_run(args):
     port = urllib.parse.urlparse(url).port or 80
     stop_own_app(port)
     run_id = f"local-{level}{'-v2' if variant == 'v2' else ''}-{time.strftime('%Y%m%d-%H%M%S')}"
-    marker = {"full": "not flaky", "extended": "(extended or bug) and not flaky"}.get(level, f"{level} and not flaky")
+    marker = {"full": "not flaky", "extended": "(smoke or functional or extended or bug) and not flaky"}.get(level, f"{level} and not flaky")
     env = {"GENE2_APP_START": f"python3 {ROOT / 'demo-app' / 'serve.py'} --variant {variant} --port {port}",
            "GENE2_BASE_URL": url, "ATLASSIAN_BASE_URL": secret("ATLASSIAN_BASE_URL")}
     if headless:
         env["GENE2_HEADLESS"] = "1"
     else:
         env["GENE2_WORKERS"] = "1"
+        env["GENE2_SLOW_MO"] = "300"  # a person can follow each action
     print(f"\n== {run_id}: {level} on app {variant} ({'headless' if headless else 'headed'}) ==")
     sh("bash", SUITE / "run.sh", "--ci", "-m", marker, "--clean-alluredir", *([] if headless else ["--headed"]), env=env)
     d = RUNS / run_id

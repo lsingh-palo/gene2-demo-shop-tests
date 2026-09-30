@@ -21,7 +21,8 @@ bug in the suite's ledger (bugs.json, filed by jira_bug.py) gets that bug attach
 as a QMetry defect (idempotent: checked before every attempt, never linked twice). Cases and cycles
 carry the label `gene2-live`, which is what `gene2 clean --qmetry` removes (never by key number).
 Safety: dry run by default; --apply needs --confirm-host equal to the host of QMETRY_BASE_URL
-(default https://qtmcloud.qmetry.com; Australia: https://syd-qtmcloud.qmetry.com); nothing is deleted.
+(default https://qtmcloud.qmetry.com; Australia: https://syd-qtmcloud.qmetry.com); no case, cycle or
+execution is deleted (only a level label a case no longer runs at is taken off it).
 Credentials: QMETRY_API_KEY (and QMETRY_BASE_URL, JIRA_PROJECT_KEY) through tools/_secrets.py only.
 Save the key from the clipboard (not the interactive prompt, which cuts input at 128 characters):
     security add-generic-password -U -s gene2 -a QMETRY_API_KEY -w "$(pbpaste)"
@@ -173,16 +174,16 @@ class Client:
 
 
 LEVEL_TAGS = ("smoke", "functional", "extended", "exploratory")
-# A level runs only its own tests (knowledge/scenario-counts.md): smoke the smoke-marked ones,
-# functional the functional-marked ones, extended the edge / security tests and the known-bug
-# reproductions (`bug`), exploratory the tests promoted from a session; "full" runs every test.
-# One definition for the local run, CI and the QMetry labels.
-TIERS = {"smoke": ("smoke",), "functional": ("functional",), "extended": ("extended", "bug"),
-         "exploratory": ("exploratory",)}
+# The levels (knowledge/scenario-counts.md): smoke the smoke-marked tests, functional the
+# functional-marked ones, extended the widest coverage (smoke + functional + the edge / security
+# tests + the known-bug reproductions), exploratory the tests promoted from a session; "full" runs
+# every test. One definition for the local run, CI and the QMetry labels.
+TIERS = {"smoke": ("smoke",), "functional": ("functional",),
+         "extended": ("smoke", "functional", "extended", "bug"), "exploratory": ("exploratory",)}
 
 
 def level_marker(level: str) -> str:
-    """The pytest -m expression for a level: "extended" -> "(extended or bug) and not flaky"."""
+    """The pytest -m expression for a level: "smoke" -> "(smoke) and not flaky"."""
     if level in TIERS:
         return f"({' or '.join(TIERS[level])}) and not flaky"
     return "not flaky"  # full: every test but the quarantined
