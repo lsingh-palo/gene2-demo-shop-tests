@@ -72,15 +72,22 @@ def expected_actual(msg: str) -> tuple[str, str]:
 
 
 def failures(junit: pathlib.Path) -> list[dict]:
-    out = []
+    """One row per test: a call failure and a teardown error of the same test are one failure."""
+    out: dict[tuple[str, str], dict] = {}
     for tc in ET.parse(junit).getroot().iter("testcase"):
         bad = next((c for c in tc if c.tag in ("failure", "error")), None)
         if bad is None:
             continue
-        out.append({"test": re.sub(r"\[.*\]$", "", tc.get("name", "")), "param": (re.search(r"\[(.*)\]$", tc.get("name", "")) or [None, ""])[1],
-                    "classname": tc.get("classname", ""), "kind": bad.tag,
-                    "message": (bad.get("message") or "").strip(), "detail": (bad.text or "")[-2000:]})
-    return out
+        row = {"test": re.sub(r"\[.*\]$", "", tc.get("name", "")), "param": (re.search(r"\[(.*)\]$", tc.get("name", "")) or [None, ""])[1],
+               "classname": tc.get("classname", ""), "kind": bad.tag,
+               "message": (bad.get("message") or "").strip(), "detail": (bad.text or "")[-2000:]}
+        key = (row["classname"], tc.get("name", ""))
+        first = out.get(key)
+        if first is None:
+            out[key] = row
+        elif first["kind"] == "error" and row["kind"] == "failure":  # the assertion is the evidence
+            out[key] = row
+    return list(out.values())
 
 
 def is_bug_marked(suite: pathlib.Path, test_file: str, test_name: str) -> bool:
@@ -106,8 +113,15 @@ def error_text(message: str, detail: str) -> str:
     return "\n".join(e_lines) or message
 
 
+def is_internal_error(row: dict) -> bool:
+    """pytest (or an xdist worker) crashed: no test failed, the run did."""
+    return (row["test"] == "internal" and not row.get("classname")) or "INTERNALERROR" in (row.get("detail") or "")
+
+
 def propose(row: dict) -> tuple[str, str]:
     msg = error_text(row["message"], row["detail"])
+    if is_internal_error(row):
+        return "environment", "the test runner crashed (pytest internal error), not a test: rerun; never a bug"
     if row.get("known_bug"):
         return "known_bug", "a known-bug reproduction failed as designed"
     if _ENV.search(msg):

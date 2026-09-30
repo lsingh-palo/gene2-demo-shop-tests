@@ -5,14 +5,18 @@ Vendored into a suite as tests/conftest.py. Works for a standalone run
 
 Execution modes (see .github/harness/knowledge/execution-modes.md):
   interactive : headed Chromium, 1 worker, headless guard ACTIVE   (default, Phase 1 parity)
-  parallel    : multi-browser + up to 5 workers, headless allowed  (user opted in)
-  ci          : headless forced, workers from GENE2_WORKERS         (GENE2_MODE=ci)
+  parallel    : multi-browser + up to 5 workers                   (user opted in)
+  ci          : workers from GENE2_WORKERS, strict known bugs      (GENE2_MODE=ci)
+
+Headed in every mode unless headless is asked for: GENE2_HEADLESS=1, "headless": true in the
+config (parallel/ci), or a runner with no screen (CI=true, Linux without a display).
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -139,9 +143,23 @@ def credentials(config) -> dict:
 
 
 # --------------------------------------------------------------------- browser args
+def _env_on(var: str) -> bool:
+    return os.environ.get(var, "").lower() in ("1", "true", "yes")
+
+
+def headless_wanted(config: dict, headed_flag: bool = False) -> bool:
+    """Headed unless asked: GENE2_HEADLESS / config "headless", or no screen (CI, Linux without a display)."""
+    if headed_flag or _env_on("GENE2_HEADED"):
+        return False
+    if _env_on("GENE2_HEADLESS") or config.get("headless"):
+        return True
+    no_display = sys.platform.startswith("linux") and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    return _env_on("CI") or no_display
+
+
 @pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args, config, execution_mode):
-    """Mode-aware. interactive => headed + guard; parallel/ci => allow headless."""
+def browser_type_launch_args(browser_type_launch_args, config, execution_mode, pytestconfig):
+    """Mode-aware. interactive => headed + guard; parallel/ci => headed unless headless is asked for."""
     args = dict(browser_type_launch_args)
     if execution_mode == "interactive":
         # Phase 1 hard guard - headless is blocked in interactive mode
@@ -149,17 +167,19 @@ def browser_type_launch_args(browser_type_launch_args, config, execution_mode):
             raise RuntimeError(
                 "HEADLESS BLOCKED in interactive mode. Use `parallel` or `ci` mode for headless."
             )
-        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS"):
+        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS", "GENE2_HEADLESS"):
             if os.environ.get(var, "").lower() in ("1", "true", "yes"):
                 raise RuntimeError(
                     f"HEADLESS BLOCKED: {var}={os.environ[var]} in interactive mode. "
                     f"Unset it, or run in `parallel`/`ci` mode."
                 )
         args["headless"] = False
-    elif execution_mode == "ci":
-        args["headless"] = True
-    else:  # parallel
-        args["headless"] = os.environ.get("GENE2_HEADED", "").lower() not in ("1", "true", "yes")
+    else:  # parallel / ci
+        try:
+            headed_flag = bool(pytestconfig.getoption("headed"))
+        except ValueError:
+            headed_flag = False
+        args["headless"] = headless_wanted(config, headed_flag)
     return args
 
 
@@ -239,6 +259,8 @@ def _gene2_ids(request, record_property):
             req = re.search(r"confirmed against (\S+)", ids["provenance"])
             if req:
                 allure.dynamic.label("requirement", req.group(1))
+        browser = getattr(request.node, "callspec", None) and request.node.callspec.params.get("browser_name")
+        allure.dynamic.label("browser", browser or os.environ.get("GENE2_PRIMARY_BROWSER", "chromium"))
     yield
 
 

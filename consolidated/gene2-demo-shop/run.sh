@@ -2,7 +2,7 @@
 # Run this suite with one command. The suite does not need the harness: copy this folder anywhere.
 #
 #   ./run.sh                          local: headed, 1 worker, the level in pytest.ini
-#   ./run.sh --ci                     pipeline: headless, parallel, JUnit + HTML + Allure; known-bug
+#   ./run.sh --ci                     pipeline mode: parallel, JUnit + HTML + Allure; known-bug
 #                                     tests (@pytest.mark.bug) are strict expected failures
 #   ./run.sh -m smoke -k checkout     anything else goes to pytest as is
 #
@@ -12,6 +12,7 @@
 #                      (for example a local server in a pipeline); it is stopped when the run ends
 #   GENE2_BROWSERS     "chromium firefox webkit" (--ci; default chromium)
 #   GENE2_WORKERS      1-5 (--ci; default 3)
+#   GENE2_HEADLESS=1   hide the browser (--ci; visible by default, hidden on a CI runner where CI=true)
 #   GENE2_NO_VENV=1    use the current Python instead of .venv (default in CI, where CI=true)
 #   PYTHON             the Python to use (default python3)
 # Reports: <suite>/reports/ (paths you pass to pytest are relative to the suite folder).
@@ -80,5 +81,5 @@ set +e
 "$PY" -m pytest ${OPTS[@]+"${OPTS[@]}"} ${ARGS[@]+"${ARGS[@]}"}
 RC=$?
 set -e
-echo "run.sh: reports in $SUITE/reports/ (HTML, Allure results$( [ "$CI_MODE" = 1 ] && echo ', JUnit' )). Re-run: $0 $*"
+echo "run.sh: reports in $SUITE/reports/ (HTML, Allure results$( [ "$CI_MODE" = 1 ] && echo ', JUnit' )). Re-run: $(printf '%q' "$0")$(printf ' %q' "$@")"
 exit $RC

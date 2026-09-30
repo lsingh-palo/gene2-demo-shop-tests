@@ -37,7 +37,7 @@ run-name: "gene2 ${{ inputs.level || (github.event_name == 'pull_request' && 'sm
 on:
   pull_request:
   push:
-    branches: [main, master, develop, "gene2/**"]
+    branches: [main, master, develop]
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
@@ -71,6 +71,7 @@ jobs:
       image: mcr.microsoft.com/playwright/python:v1.54.0-jammy
     env:
       GENE2_MODE: ci
+      GENE2_HEADLESS: "1"
       GENE2_TARGET_SLUG: ${{ vars.GENE2_TARGET_SLUG || 'app-example-com' }}
       GENE2_BASE_URL: ${{ vars.GENE2_BASE_URL }}
       GENE2_BROWSERS: ${{ vars.GENE2_BROWSERS || 'chromium' }}
@@ -90,12 +91,12 @@ jobs:
           elif [ "${{ github.event_name }}" = "schedule" ]; then L=extended
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then L="${{ inputs.level }}"
           else L=functional; fi
-          # levels add up (knowledge/scenario-counts.md): extended is the full regression set
+          # a level runs only its own tests (knowledge/scenario-counts.md); full runs every test
           case "$L" in
-            smoke) M="(smoke) and not flaky" ;;
-            functional) M="(smoke or functional) and not flaky" ;;
-            extended) M="(smoke or functional or extended or bug) and not flaky" ;;
-            exploratory) M="(exploratory) and not flaky" ;;
+            smoke) M="smoke and not flaky" ;;
+            functional) M="functional and not flaky" ;;
+            extended) M="(extended or bug) and not flaky" ;;
+            exploratory) M="exploratory and not flaky" ;;
             *) M="not flaky" ;;
           esac
           echo "value=$L" >> "$GITHUB_OUTPUT"
@@ -136,7 +137,7 @@ jobs:
           HOST=$(python -c "import urllib.parse,os;print(urllib.parse.urlparse(os.environ['QMETRY_BASE_URL']).hostname)")
           VERSION="${{ inputs.version }}"
           python "$TOOLS/qmetry_sync.py" results --slug "$GENE2_TARGET_SLUG" --junit report.xml \
-            --run "${{ steps.level.outputs.run_id }}" --env "${{ inputs.env || 'test' }}" ${VERSION:+--version "$VERSION"} \
+            --run "${{ steps.level.outputs.run_id }}" --level "${{ steps.level.outputs.value }}" --env "${{ inputs.env || 'test' }}" ${VERSION:+--version "$VERSION"} \
             --apply --confirm-host "$HOST"
 
       - name: Story status (one comment per Jira story with its tests and this run's results)
