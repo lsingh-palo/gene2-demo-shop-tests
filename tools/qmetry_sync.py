@@ -172,6 +172,31 @@ class Client:
         self._req("PUT", f"/testcycles/{cycle_id}/testcase-executions/{execution_id}/defects", json={"defectIDs": defect_ids})
 
 
+LEVEL_TAGS = ("smoke", "functional", "extended", "exploratory")
+
+
+def test_levels(suite: pathlib.Path, test_file: str, test_name: str, manifest_level: str = "") -> list[str]:
+    """The levels a test runs at: its own pytest markers (smoke / functional / extended /
+    exploratory), else the manifest's level. They become QMetry labels, so every run can reuse the
+    same cases and QMetry can be filtered by level."""
+    found = []
+    src = suite / test_file
+    if src.exists():
+        lines = src.read_text(encoding="utf-8").splitlines()
+        for i, line in enumerate(lines):
+            if re.match(rf"\s*def {re.escape(test_name)}\(", line):
+                j = i - 1
+                while j >= 0 and lines[j].strip().startswith("@"):
+                    m = re.match(r"@pytest\.mark\.(\w+)", lines[j].strip())
+                    if m and m.group(1) in LEVEL_TAGS:
+                        found.append(m.group(1))
+                    j -= 1
+                break
+    if not found and manifest_level in LEVEL_TAGS:
+        found = [manifest_level]
+    return sorted(set(found), key=LEVEL_TAGS.index)
+
+
 def manifest_cases(slug: str, root: pathlib.Path) -> list[dict]:
     suite = root / "consolidated" / slug
     m = json.loads((suite / "suite-manifest.json").read_text())["scenarios"]
@@ -184,7 +209,8 @@ def manifest_cases(slug: str, root: pathlib.Path) -> list[dict]:
                 f"{s.get('provenance', '')}. Test {s['test_file']}::{s['test_name']}."
                 + (f" Requirements: {', '.join(req[s['key']])}." if req.get(s["key"]) else ""))
         out.append({"tc_id": s["tc_id"], "summary": f"{s['tc_id']} {s['title']}", "description": desc,
-                    "test_name": s["test_name"], "slug_label": slug, "stories": req.get(s["key"], [])})
+                    "test_name": s["test_name"], "slug_label": slug, "stories": req.get(s["key"], []),
+                    "levels": test_levels(suite, s["test_file"], s["test_name"], s.get("level", ""))})
     return out
 
 
@@ -229,6 +255,8 @@ class Sync:
         """Create or update one QTM4J case per manifest scenario. Returns tc_id -> {id, versionNo}."""
         found = {}
         label_ids = self._label_ids([LABEL, LIVE, cases[0]["slug_label"]]) if cases else []
+        wanted_levels = sorted({lv for c in cases for lv in c.get("levels", [])}, key=LEVEL_TAGS.index)
+        level_ids = dict(zip(wanted_levels, self._label_ids(wanted_levels))) if wanted_levels else {}
         for case in cases:
             hits = [h for h in (self.c.search_cases(self.pid, case["tc_id"]) if self.c else [])
                     if h.get("summary") == case["summary"]]
@@ -243,12 +271,21 @@ class Sync:
                     self.act("update", f"{h.get('key')} {case['summary']}")
                     if self.apply:
                         self.c.update_case(h["id"], ver, {"description": case["description"], "isAutomated": True})
+                have = {(l.get("name") if isinstance(l, dict) else str(l)) for l in (h.get("labels") or [])}
+                add = [lv for lv in case.get("levels", []) if lv not in have]
+                if add:
+                    self.act("label", f"{h.get('key')} + {', '.join(add)}")
+                    if self.apply and all(level_ids.get(lv) for lv in add):
+                        # QTM4J updates labels as an add-list, not a full list (a full list is a 400)
+                        self.c.update_case(h["id"], ver, {"labels": {"add": [level_ids[lv] for lv in add]}})
             else:
                 self.act("create", f"test case {case['summary']}")
                 self.new_cases.append(case["tc_id"])
                 if self.apply:
                     r = self.c.create_case({"projectId": self.pid, "summary": case["summary"], "description": case["description"],
-                                            "isAutomated": True, "labels": [i for i in label_ids if i is not None],
+                                            "isAutomated": True,
+                                            "labels": [i for i in label_ids + [level_ids.get(lv) for lv in case.get("levels", [])]
+                                                       if i is not None],
                                             "steps": [{"stepDetails": f"Run {case['test_name']}", "expectedResult": "The test passes."}]})
                     found[case["tc_id"]] = {"id": r.get("id"), "versionNo": r.get("versionNo", 1)}
                     self.tc_keys[case["tc_id"]] = r.get("key", "")
