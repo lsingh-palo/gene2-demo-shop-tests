@@ -8,8 +8,9 @@ Execution modes (see .github/harness/knowledge/execution-modes.md):
   parallel    : multi-browser + up to 5 workers                   (user opted in)
   ci          : workers from GENE2_WORKERS, strict known bugs      (GENE2_MODE=ci)
 
-Headed in every mode unless headless is asked for: GENE2_HEADLESS=1, "headless": true in the
-config (parallel/ci), or a runner with no screen (CI=true, Linux without a display).
+Headed in every mode unless headless is asked for: GENE2_HEADLESS=1 or "headless": true in the
+config (either one moves an interactive run to parallel mode, so it runs instead of refusing), or a
+runner with no screen (CI=true, Linux without a display).
 """
 from __future__ import annotations
 
@@ -51,6 +52,8 @@ def config() -> dict:
 def execution_mode(config) -> str:
     if os.environ.get("GENE2_MODE") == "ci":
         return "ci"
+    if _env_on("GENE2_HEADLESS") or config.get("headless"):
+        return "parallel"  # headless asked for: leave interactive (always headed) instead of refusing
     mode = config.get("execution_mode")
     if mode in ("interactive", "parallel", "ci"):
         return mode
@@ -167,7 +170,7 @@ def browser_type_launch_args(browser_type_launch_args, config, execution_mode, p
             raise RuntimeError(
                 "HEADLESS BLOCKED in interactive mode. Use `parallel` or `ci` mode for headless."
             )
-        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS", "GENE2_HEADLESS"):
+        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS"):
             if os.environ.get(var, "").lower() in ("1", "true", "yes"):
                 raise RuntimeError(
                     f"HEADLESS BLOCKED: {var}={os.environ[var]} in interactive mode. "

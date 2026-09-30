@@ -5,7 +5,7 @@
     ./gene2 clean [--apply]              what runs created in Jira + QMetry, and local leftovers; --apply
                                          deletes it after YOU type the Jira host (so no script or AI can)
     ./gene2 clean local                  local run leftovers only (no host to type)
-    ./gene2 run <level> [v2] [headed] [--version 2.3.7] [--env test]
+    ./gene2 run <level> [v2] [headless] [--version 2.3.7] [--env test]
                                          run here: smoke | functional | extended | exploratory | full, on v1
                                          (or v2); then QMetry sync (env test, the version given or the next
                                          automatic one) and the run report
@@ -152,24 +152,26 @@ def c_clean(args):
 def c_run(args):
     level = next((a for a in args if a in LEVELS), None) or sys.exit(f"which level? {', '.join(LEVELS)}")
     variant = "v2" if "v2" in args else "v1"
-    headed = "headed" in args
+    headless = "headless" in args  # the browser is visible unless asked
     url = app_url()
     port = urllib.parse.urlparse(url).port or 80
     stop_own_app(port)
     run_id = f"local-{level}{'-v2' if variant == 'v2' else ''}-{time.strftime('%Y%m%d-%H%M%S')}"
-    marker = "not flaky" if level == "full" else level
+    marker = {"full": "not flaky", "extended": "(extended or bug) and not flaky"}.get(level, f"{level} and not flaky")
     env = {"GENE2_APP_START": f"python3 {ROOT / 'demo-app' / 'serve.py'} --variant {variant} --port {port}",
            "GENE2_BASE_URL": url, "ATLASSIAN_BASE_URL": secret("ATLASSIAN_BASE_URL")}
-    if headed:
+    if headless:
+        env["GENE2_HEADLESS"] = "1"
+    else:
         env["GENE2_WORKERS"] = "1"
-    print(f"\n== {run_id}: {level} on app {variant} ({'headed' if headed else 'headless'}) ==")
-    sh("bash", SUITE / "run.sh", "--ci", "-m", marker, "--clean-alluredir", *(["--headed"] if headed else []), env=env)
+    print(f"\n== {run_id}: {level} on app {variant} ({'headless' if headless else 'headed'}) ==")
+    sh("bash", SUITE / "run.sh", "--ci", "-m", marker, "--clean-alluredir", *([] if headless else ["--headed"]), env=env)
     d = RUNS / run_id
     d.mkdir(parents=True, exist_ok=True)
     shutil.copy(SUITE / "reports" / "junit.xml", d / "junit.xml")
     if secret("QMETRY_API_KEY"):
         tool("qmetry_sync.py", "results", "--slug", SLUG, "--junit", d / "junit.xml", "--run", run_id,
-             *opt(args, "--version"), *opt(args, "--env"), "--apply", "--confirm-host", qmetry_host())
+             "--level", level, *opt(args, "--version"), *opt(args, "--env"), "--apply", "--confirm-host", qmetry_host())
     else:
         print("QMetry sync skipped: no QMETRY_API_KEY")
     report(run_id)

@@ -70,14 +70,14 @@ git add consolidated/gene2-demo-shop/bugs.json && git commit -m "Reset the bug l
 
 | Level | What | Local | CI |
 |---|---|---|---|
-| smoke | 5 critical-path tests (every PR runs this) | `./gene2 run smoke headed` | `./gene2 ci smoke` |
-| functional | 39 standard regression tests (every push) | `./gene2 run functional` | `./gene2 ci functional` |
-| extended | edge and security tests (nightly) | `./gene2 run extended` | `./gene2 ci extended` |
+| smoke | the smoke-marked critical-path tests only (every PR runs this) | `./gene2 run smoke` | `./gene2 ci smoke` |
+| functional | the functional-marked tests only (every push) | `./gene2 run functional` | `./gene2 ci functional` |
+| extended | edge and security tests and the known-bug reproductions (nightly) | `./gene2 run extended` | `./gene2 ci extended` |
 | exploratory | tests promoted from exploratory sessions | `./gene2 run exploratory v2` | `./gene2 ci exploratory` |
 | full | every test; the 2 known-bug reproductions fail as designed and the run stays green | `./gene2 run full` | `./gene2 ci full` |
 
 Add `v2` to run against the release candidate (`demo-app` v2, which has regressions): real
-failures, to triage and file. `headed` shows the browser (one worker). Add `--version 2.3.7` to
+failures, to triage and file. The browser is visible (one worker); `headless` hides it. Add `--version 2.3.7` to
 name the version under test: the same value then shows on the CI run page, in Allure's Environment
 panel (with the run id, the QMetry cycle key and a link to the CI run), in the stakeholder PDF and
 on the QMetry cycle, whose description links back to the CI run.
@@ -147,7 +147,7 @@ to the open bug instead of a duplicate). Rows proposed `needs_review` wait for a
 |---|---|
 | `./gene2 preflight` | ready check and leftovers (read-only) |
 | `./gene2 clean [--apply]` / `./gene2 clean local` | remove what runs created / local leftovers only |
-| `./gene2 run <level> [v2] [headed] [--version X]` | run here + QMetry sync + run report |
+| `./gene2 run <level> [v2] [headless] [--version X]` | run here + QMetry sync + run report |
 | `./gene2 ci <level> [v2] [--version X]` | run in GitHub Actions, wait, fetch the run report |
 | `./gene2 triage` / `accept` / `bugs [--dry-run]` | failures -> confirmed -> Jira bugs attached in QMetry |
 | `./gene2 promote <test> --module M --title T` | add a new exploratory test to the manifest |
