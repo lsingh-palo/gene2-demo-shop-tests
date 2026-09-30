@@ -90,7 +90,14 @@ jobs:
           elif [ "${{ github.event_name }}" = "schedule" ]; then L=extended
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then L="${{ inputs.level }}"
           else L=functional; fi
-          if [ "$L" = full ]; then M="not flaky"; else M="$L"; fi
+          # levels add up (knowledge/scenario-counts.md): extended is the full regression set
+          case "$L" in
+            smoke) M="(smoke) and not flaky" ;;
+            functional) M="(smoke or functional) and not flaky" ;;
+            extended) M="(smoke or functional or extended or bug) and not flaky" ;;
+            exploratory) M="(exploratory) and not flaky" ;;
+            *) M="not flaky" ;;
+          esac
           echo "value=$L" >> "$GITHUB_OUTPUT"
           echo "marker=$M" >> "$GITHUB_OUTPUT"
           echo "run_id=gh-${{ github.run_id }}-$L" >> "$GITHUB_OUTPUT"
