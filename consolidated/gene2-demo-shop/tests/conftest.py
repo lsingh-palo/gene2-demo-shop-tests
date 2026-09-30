@@ -4,13 +4,14 @@ Vendored into a suite as tests/conftest.py. Works for a standalone run
 (config/test_config.json) and for a consolidated suite (config/suite-config.json).
 
 Execution modes (see .github/harness/knowledge/execution-modes.md):
-  interactive : headed Chromium, 1 worker, headless guard ACTIVE   (default, Phase 1 parity)
+  interactive : headed Chromium, 1 worker, slowed so it can be watched (default, Phase 1 parity)
   parallel    : multi-browser + up to 5 workers                   (user opted in)
   ci          : workers from GENE2_WORKERS, strict known bugs      (GENE2_MODE=ci)
 
 Headed in every mode unless headless is asked for: GENE2_HEADLESS=1 or "headless": true in the
 config (either one moves an interactive run to parallel mode, so it runs instead of refusing), or a
-runner with no screen (CI=true, Linux without a display).
+runner with no screen (CI=true, Linux without a display). A visible browser pauses GENE2_SLOW_MO ms
+(default 300 in interactive mode, else 0) after each action, so a person can follow the test.
 """
 from __future__ import annotations
 
@@ -156,33 +157,35 @@ def headless_wanted(config: dict, headed_flag: bool = False) -> bool:
         return False
     if _env_on("GENE2_HEADLESS") or config.get("headless"):
         return True
+    return _no_screen()
+
+
+def _no_screen() -> bool:
+    """A runner nobody can watch: CI, or Linux without a display (a headed launch would fail)."""
     no_display = sys.platform.startswith("linux") and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
     return _env_on("CI") or no_display
 
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args, config, execution_mode, pytestconfig):
-    """Mode-aware. interactive => headed + guard; parallel/ci => headed unless headless is asked for."""
+    """Mode-aware. interactive => headed wherever there is a screen; parallel/ci => headed unless asked."""
     args = dict(browser_type_launch_args)
     if execution_mode == "interactive":
-        # Phase 1 hard guard - headless is blocked in interactive mode
-        if config.get("headless"):
-            raise RuntimeError(
-                "HEADLESS BLOCKED in interactive mode. Use `parallel` or `ci` mode for headless."
-            )
-        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS"):
-            if os.environ.get(var, "").lower() in ("1", "true", "yes"):
-                raise RuntimeError(
-                    f"HEADLESS BLOCKED: {var}={os.environ[var]} in interactive mode. "
-                    f"Unset it, or run in `parallel`/`ci` mode."
-                )
-        args["headless"] = False
+        for var in ("HEADLESS", "PLAYWRIGHT_HEADLESS"):  # legacy, usually left over from another tool
+            if _env_on(var):
+                print(f"NOTICE: {var} is ignored; GENE2_HEADLESS=1 hides the browser")
+        args["headless"] = _no_screen()
     else:  # parallel / ci
         try:
             headed_flag = bool(pytestconfig.getoption("headed"))
         except ValueError:
             headed_flag = False
         args["headless"] = headless_wanted(config, headed_flag)
+    if not args["headless"]:
+        slow = os.environ.get("GENE2_SLOW_MO") or config.get("slow_mo")
+        slow = int(slow) if slow not in (None, "") else (300 if execution_mode == "interactive" else 0)
+        if slow > 0:
+            args.setdefault("slow_mo", slow)  # an explicit --slowmo wins
     return args
 
 

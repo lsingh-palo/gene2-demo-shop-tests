@@ -72,12 +72,12 @@ git add consolidated/gene2-demo-shop/bugs.json && git commit -m "Reset the bug l
 |---|---|---|---|
 | smoke | the smoke-marked critical-path tests only (every PR runs this) | `./gene2 run smoke` | `./gene2 ci smoke` |
 | functional | the functional-marked tests only (every push) | `./gene2 run functional` | `./gene2 ci functional` |
-| extended | edge and security tests and the known-bug reproductions (nightly) | `./gene2 run extended` | `./gene2 ci extended` |
+| extended | the widest level: smoke + functional + edge and security tests + the known-bug reproductions (nightly) | `./gene2 run extended` | `./gene2 ci extended` |
 | exploratory | tests promoted from exploratory sessions | `./gene2 run exploratory v2` | `./gene2 ci exploratory` |
 | full | every test; the 2 known-bug reproductions fail as designed and the run stays green | `./gene2 run full` | `./gene2 ci full` |
 
 Add `v2` to run against the release candidate (`demo-app` v2, which has regressions): real
-failures, to triage and file. The browser is visible (one worker); `headless` hides it. Add `--version 2.3.7` to
+failures, to triage and file. The browser is visible (one worker, 300 ms per action so each step can be followed); `headless` hides it. Add `--version 2.3.7` to
 name the version under test: the same value then shows on the CI run page, in Allure's Environment
 panel (with the run id, the QMetry cycle key and a link to the CI run), in the stakeholder PDF and
 on the QMetry cycle, whose description links back to the CI run.

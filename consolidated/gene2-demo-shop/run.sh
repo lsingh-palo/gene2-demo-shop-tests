@@ -13,6 +13,7 @@
 #   GENE2_BROWSERS     "chromium firefox webkit" (--ci; default chromium)
 #   GENE2_WORKERS      1-5 (--ci; default 3)
 #   GENE2_HEADLESS=1   hide the browser (--ci; visible by default, hidden on a CI runner where CI=true)
+#   GENE2_SLOW_MO      ms paused after each action while the browser is visible (default 300 without --ci)
 #   GENE2_NO_VENV=1    use the current Python instead of .venv (default in CI, where CI=true)
 #   PYTHON             the Python to use (default python3)
 # Reports: <suite>/reports/ (paths you pass to pytest are relative to the suite folder).
@@ -26,7 +27,7 @@ ARGS=()
 for a in "$@"; do
   case "$a" in
     --ci) CI_MODE=1 ;;
-    -h|--help) sed -n '2,19p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) ARGS+=("$a") ;;
   esac
 done

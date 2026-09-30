@@ -91,11 +91,11 @@ jobs:
           elif [ "${{ github.event_name }}" = "schedule" ]; then L=extended
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then L="${{ inputs.level }}"
           else L=functional; fi
-          # a level runs only its own tests (knowledge/scenario-counts.md); full runs every test
+          # extended = smoke + functional + edges and known bugs (knowledge/scenario-counts.md); full = every test
           case "$L" in
             smoke) M="smoke and not flaky" ;;
             functional) M="functional and not flaky" ;;
-            extended) M="(extended or bug) and not flaky" ;;
+            extended) M="(smoke or functional or extended or bug) and not flaky" ;;
             exploratory) M="exploratory and not flaky" ;;
             *) M="not flaky" ;;
           esac
