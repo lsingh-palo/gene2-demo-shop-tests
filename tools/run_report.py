@@ -27,6 +27,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 import xml.etree.ElementTree as ET
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -34,6 +35,14 @@ sys.path.insert(0, str(HERE))
 
 
 # ------------------------------------------------------------------------------------------ inputs
+
+def open_bugs_link(jira_base: str, slug: str) -> str:
+    """The suite's bugs that are still open: a closed (Done) bug is history, not something to look at."""
+    if not jira_base:
+        return ""
+    jql = f'labels = "gene2-suite-{slug}" AND statusCategory != Done ORDER BY created DESC'
+    return f"{jira_base.rstrip('/')}/issues/?jql={urllib.parse.quote(jql)}"
+
 def read_junit(path: pathlib.Path) -> dict:
     root = ET.parse(path).getroot()
     suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
@@ -159,8 +168,7 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, run_id: str = "", 
                   "branch": branch, "commit": commit,
                   "local_repo": "" if (where == "ci" or ci_url) else str(root), "jira_base": jira_base.rstrip("/"),
                   "allure_local": allure_cmd or f"allure serve {allure_results or suite / 'reports' / 'allure-results'}",
-                  "jira_project_bugs": (f"{jira_base.rstrip('/')}/issues/?jql=labels%20%3D%20%22gene2-suite-{slug}%22"
-                                        if jira_base else "")},
+                  "jira_project_bugs": open_bugs_link(jira_base, slug)},
     }
 
 
@@ -254,7 +262,7 @@ def render(r: dict) -> str:
     if r["bugs"]:
         out.append(f"| Jira bugs linked to failures | {', '.join(bug(k) for k in r['bugs'])} |")
     if L.get("jira_project_bugs"):
-        out.append(f"| Every bug this suite's runs filed | {L['jira_project_bugs']} |")
+        out.append(f"| Open bugs this suite's runs filed (closed ones left out) | {L['jira_project_bugs']} |")
     if L.get("local_repo"):
         out.append(f"| Local repo | `{L['local_repo']}` |")
     if L["remote_repo"]:

@@ -93,12 +93,13 @@ def _git(*args: str) -> str:
         return ""
 
 
-def env_block(run: str, app_url: str = "", variant: str = "", browser: str = "") -> str:
+def env_block(run: str, app_url: str = "", variant: str = "", browser: str = "", build: str = "") -> str:
     ci_run = next((f"{k}={os.environ[k]}" for k in ("GITHUB_RUN_ID", "CI_PIPELINE_ID", "BUILD_ID") if os.environ.get(k)), "local")
     return "\n".join([
         "Build and environment:",
         f"- app: {app_url or os.environ.get('GENE2_BASE_URL', '(not given)')}"
         + (f"  variant: {variant or os.environ.get('GENE2_APP_VARIANT')}" if (variant or os.environ.get('GENE2_APP_VARIANT')) else ""),
+        *([f"- build: {build}"] if build else []),
         f"- browser: {browser or os.environ.get('GENE2_PRIMARY_BROWSER', 'chromium')}",
         f"- run: {run or 'manual'}   CI: {ci_run}",
         f"- commit: {_git('rev-parse', '--short', 'HEAD') or '?'}   branch: {_git('rev-parse', '--abbrev-ref', 'HEAD') or '?'}",
@@ -142,7 +143,11 @@ def find_open(base, auth, lbl: str):
     return issues[0] if issues else None
 
 
-def create(base, auth, proj, summary, body, lbl, severity, extra_labels=(), slug=""):
+def build_label(build: str) -> str:
+    return "gene2-build-" + re.sub(r"[^A-Za-z0-9._-]+", "-", build)
+
+
+def create(base, auth, proj, summary, body, lbl, severity, extra_labels=(), slug="", build=""):
     payload = {
         "fields": {
             "project": {"key": proj},
@@ -150,11 +155,18 @@ def create(base, auth, proj, summary, body, lbl, severity, extra_labels=(), slug
             "summary": summary[:250],
             "description": _adf(body),
             "labels": [lbl, "gene2", LIVE, *([suite_label(slug)] if slug else []),
-                       f"severity-{severity.lower()}", *extra_labels],
+                       *([build_label(build)] if build else []), f"severity-{severity.lower()}", *extra_labels],
         }
     }
+    if build:  # the Jira "Affects versions" field, when the project has a version of that name
+        payload["fields"]["versions"] = [{"name": build}]
     r = requests.post(f"{base}/rest/api/3/issue", json=payload, auth=auth,
                       headers={"Accept": "application/json"}, timeout=30)
+    if build and r.status_code == 400 and "version" in r.text.lower():
+        print(f"note: the project has no version '{build}'; filed with the label {build_label(build)} only")
+        del payload["fields"]["versions"]
+        r = requests.post(f"{base}/rest/api/3/issue", json=payload, auth=auth,
+                          headers={"Accept": "application/json"}, timeout=30)
     r.raise_for_status()
     return r.json()["key"]
 
@@ -222,7 +234,8 @@ def from_triage(a, base, auth, proj) -> int:
     unconfirmed = [r["test"] for r in t["rows"] if not r.get("confirmed")]
     if unconfirmed:
         print(f"note: {len(unconfirmed)} row(s) not confirmed, never filed: {', '.join(unconfirmed)}")
-    env = env_block(run, a.app_url, a.variant, a.browser)
+    build = a.build or t.get("build") or os.environ.get("GENE2_APP_BUILD", "")
+    env = env_block(run, a.app_url, a.variant, a.browser, build)
     for g in groups:
         bk = bugkey(slug, g["module"], g["title"])
         fp = label(slug, bk)
@@ -237,7 +250,8 @@ def from_triage(a, base, auth, proj) -> int:
                 print(f"\n[dry-run] {summary}\n  duplicate of {dup} (triage): one comment on {dup}, no new issue; tests: {tests}")
                 continue
             print(f"\n[dry-run] {summary}\n  fingerprint {fp}; if open -> one comment, else create with labels "
-                  f"{LIVE}, {suite_label(slug)}; links: {', '.join(stories) or 'none'}; screenshot: {shot or 'none'}; tests: {tests}")
+                  f"{LIVE}, {suite_label(slug)}" + (f", {build_label(build)} and affects version {build}" if build else "")
+                  + f"; links: {', '.join(stories) or 'none'}; screenshot: {shot or 'none'}; tests: {tests}")
             print("  " + body.replace("\n", "\n  "))
             continue
         dup = next((r.get("duplicate_of") for r in g["rows"] if r.get("duplicate_of")), "")
@@ -248,7 +262,7 @@ def from_triage(a, base, auth, proj) -> int:
                                      f"Still failing. No duplicate created.\n\n{env}")
             print(f"duplicate {key}: commented ({tests})")
         else:
-            key = create(base, auth, proj, summary, body, fp, g["severity"], a.label, slug=slug)
+            key = create(base, auth, proj, summary, body, fp, g["severity"], a.label, slug=slug, build=build)
             for st in stories:
                 link(base, auth, key, st)
             if shot:
@@ -257,7 +271,7 @@ def from_triage(a, base, auth, proj) -> int:
                   f"{'screenshot attached' if shot else 'no screenshot'}")
         first = g["rows"][0]
         bug_ledger.record(slug, bk, "open", jira=key, title=g["title"], module=g["module"], severity=g["severity"],
-                          test=f"{first['test_file']}::{first['test']}")
+                          test=f"{first['test_file']}::{first['test']}", **({"build": build} if build else {}))
     print(f"{len(groups)} bug group(s) from {sum(len(g['rows']) for g in groups)} confirmed row(s)")
     return 0
 
@@ -278,6 +292,8 @@ def main() -> int:
     p.add_argument("--label", action="append", default=[],
                    help="extra label on a new issue (repeatable), e.g. release-42 or a team label")
     p.add_argument("--from-triage", help="file the confirmed rows of a triage.json (gene2 triage)")
+    p.add_argument("--build", default="", help="the app build the bug was found on (default: the triage's); "
+                   "set as the Jira affects version and a gene2-build-<build> label")
     p.add_argument("--run", default="", help="run id for the comment marker and the env block")
     p.add_argument("--app-url", default="")
     p.add_argument("--variant", default="")
@@ -338,10 +354,10 @@ def main() -> int:
         print(f"updated existing {existing['key']} ({existing['fields']['status']['name']})")
         key = existing["key"]
     else:
-        key = create(base, auth, proj, summary, body, lbl, a.severity, a.label, slug=a.slug)
+        key = create(base, auth, proj, summary, body, lbl, a.severity, a.label, slug=a.slug, build=a.build)
         print(f"created {key}  ({base}/browse/{key})")
     bug_ledger.record(a.slug, bk, "open", jira=key, title=a.title, module=a.module,
-                      severity=a.severity, **({"test": a.test} if a.test else {}))
+                      severity=a.severity, **({"test": a.test} if a.test else {}), **({"build": a.build} if a.build else {}))
     return 0
 
 
