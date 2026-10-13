@@ -178,9 +178,19 @@ def build(slug: str, junit: pathlib.Path, root: pathlib.Path, parity: pathlib.Pa
             "built": datetime.datetime.now().isoformat(timespec="seconds"), "rows": rows}
 
 
+def recorded_build(root: pathlib.Path, run: str, junit: pathlib.Path) -> str:
+    """The build gene2 run recorded for this run (.gene2-local/runs/LAST.json), else ''."""
+    try:
+        last = json.loads((root / ".gene2-local" / "runs" / "LAST.json").read_text())
+    except (OSError, ValueError):
+        return ""
+    same = last.get("run_id") in (run, junit.resolve().parent.name) or last.get("junit") == str(junit)
+    return (last.get("build") or "") if same else ""
+
+
 def render_md(t: dict) -> str:
     counts = {c: sum(1 for r in t["rows"] if r["class"] == c) for c in CLASSES}
-    out = [f"# Failure triage - {t['slug']} ({t['run']})", "",
+    out = [f"# Failure triage - {t['slug']} ({t['run']}" + (f", build {t['build']}" if t.get("build") else "") + ")", "",
            f"{len(t['rows'])} failed tests. " + ", ".join(f"{c}: {n}" for c, n in counts.items() if n) + ".",
            f"Confirmed: {sum(r['confirmed'] for r in t['rows'])} of {len(t['rows'])}. "
            "Only confirmed product_bug rows are filed; known_bug rows add a comment to the open bug.", "",
@@ -218,6 +228,8 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--reports", help="the reports folder with screenshots/ and traces/ (default: next to the junit file)")
     b.add_argument("--out", help="default: the run's docs/ folder (sibling of the junit file's folder)")
     b.add_argument("--run", help="the run id (default: the name of the junit file's run folder)")
+    b.add_argument("--build", help="the app build the run tested, e.g. v2.0 (default: the one gene2 run "
+                   "recorded for this run); every bug filed from this triage carries it")
     s = sub.add_parser("set")
     s.add_argument("--file", required=True)
     s.add_argument("--test", required=True)
@@ -239,9 +251,10 @@ def main(argv: list[str] | None = None) -> int:
         out = pathlib.Path(a.out) if a.out else junit.resolve().parents[1] / "docs"
         if a.run:
             t["run"] = a.run
+        t["build"] = a.build or recorded_build(root, t["run"], junit)
         write(t, out)
         n = len(t["rows"])
-        print(f"{n} failure(s) triaged -> {out / 'triage.md'}")
+        print(f"{n} failure(s) triaged -> {out / 'triage.md'}" + (f"  (build {t['build']})" if t.get("build") else ""))
         for r in t["rows"]:
             print(f"  {r['tc_id'] or '-':6} {r['test']:<50} proposed {r['proposed']}")
         print("Confirm each row: gene2 triage set --file ... --test ... --class ... --reason \"...\"")
